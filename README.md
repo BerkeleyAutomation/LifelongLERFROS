@@ -7,7 +7,7 @@ It should just work with the default Ubuntu 22.04 setup, but I could be missing 
 ```
 mkdir -p ~/ros2_ws/src
 cd ~/ros2_ws
-git clone <> src
+git clone https://github.com/BerkeleyAutomation/LifelongLERFROS.git src
 ```
 
 ## Running the code
