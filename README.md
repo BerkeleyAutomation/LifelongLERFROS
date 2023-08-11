@@ -1,7 +1,6 @@
-# Insta360 H264 Prime ROS Driver
-
-Given an Insta360 ONE X2, this repo can be 
-This repo can be built in a ROS2 humble workspace, so that when an Insta360 ONE X2 is connected with USB, the 2 fisheye images are published to separate ROS topics. The insta_fisheye node will publish the byte array containing the H264 streaming data. The h264_subscriber node will decode the byte array accordingly to generate an image that is then published. This has been tested on Ubuntu 22.04.
+# Lifelong LERF ROS
+This repo will contain the ROS2 workspace code for the Lifelong LERF project. Currently, it contains a ROS driver for the Insta360 ONE X2 camera. When the camera is
+connected with USB, the 2 fisheye images are published to separate ROS topics. The insta_fisheye node will publish the byte array containing the H264 streaming data. The h264_subscriber node will decode the byte array accordingly to generate an image that is then published. This has been tested on Ubuntu 22.04.
 
 ## Installation and Setup
 It should just work with the default Ubuntu 22.04 setup, but I could be missing something.
