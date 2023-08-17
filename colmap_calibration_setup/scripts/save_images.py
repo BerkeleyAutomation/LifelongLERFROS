@@ -6,6 +6,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import cv2
+import sys
 import os
 import pathlib
 
@@ -18,7 +19,16 @@ class SaveImages(Node):
         self.subscription_  # prevent unused variable warning
         self.i_ = 1
         self.bridge_ = CvBridge()
-        self.photo_path_ = "lifelong_lerf_calibration_photos"
+        self.photo_path_ = "lifelong_lerf_checkerboard_calibration_photos"
+        self.declare_parameters(
+            namespace='',
+            parameters=[
+                ('arg1',rclpy.Parameter.Type.INTEGER),
+            ]
+        )
+        #arg1_param = self.get_parameter('arg1')
+        #arg1 = arg1_param.value
+        #self.i_ = int(arg1)
 
     def imageCallback(self, msg):
         try:
@@ -36,6 +46,8 @@ class SaveImages(Node):
             cv2.imwrite(save_path, cv_image)
             self.get_logger().info("Image saved: %s" % save_path)
             self.i_ += 1
+            #rclpy.shutdown()
+
         except Exception as e:
             self.get_logger().error("Error saving image: %s" % str(e))
 

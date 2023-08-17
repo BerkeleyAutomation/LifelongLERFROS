@@ -85,7 +85,7 @@ public:
         ins_camera::LiveStreamParam param;
         param.video_resolution = ins_camera::VideoResolution::RES_720_360P30;
         param.lrv_video_resulution = ins_camera::VideoResolution::RES_720_360P30;
-        param.video_bitrate = 1024 * 1024 / 2;
+        param.video_bitrate = 1024 * 1024 * 4;
         param.enable_audio = false;
         param.using_lrv = false;
         if (cam->StartLiveStreaming(param)) {
