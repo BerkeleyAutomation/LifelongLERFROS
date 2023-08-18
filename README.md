@@ -1,19 +1,42 @@
 # Lifelong LERF ROS
-This repo will contain the ROS2 workspace code for the Lifelong LERF project. Currently, it contains a ROS driver for the Insta360 ONE X2 camera. When the camera is
-connected with USB, the 2 fisheye images are published to separate ROS topics. The insta_fisheye node will publish the byte array containing the H264 streaming data. The h264_subscriber node will decode the byte array accordingly to generate an image that is then published. This has been tested on Ubuntu 22.04.
+This repo will contain the ROS2 workspace code for the Lifelong LERF project. Currently, it can perform navigation on a Turtlebot4 Lite along with send images with a BRIO Webcam. This has been tested on Ubuntu 22.04.
 
-## Installation and Setup
-It should just work with the default Ubuntu 22.04 setup, but I could be missing something.
+## Turtlebot Installation and Setup
 ```
+sudo apt-get install ros-humble-rplidar-ros #Should already be on there
 mkdir -p ~/ros2_ws/src
 cd ~/ros2_ws
 git clone https://github.com/BerkeleyAutomation/LifelongLERFROS.git src
 ```
 
-## Running the code
+To setup the Turtlebot to talk to the computer and vice versa, follow the instructions in this link: https://turtlebot.github.io/turtlebot4-user-manual/setup/basic.html.
+
+## Computer Installation and Setup
 ```
+sudo apt-get install ros-humble-turtlebot4-navigation
+sudo apt-get install ros-humble-navigation2
+sudo apt-get install ros-humble-nav2-bringup
+mkdir -p ~/ros2_ws/src
+cd ~/ros2_ws
+git clone https://github.com/BerkeleyAutomation/LifelongLERFROS.git src
+```
+
+## Run Navigation
+ON TURTLEBOT
+```
+cd ~/ros2_ws
 colcon build
 . install/setup.bash
-ros2 launch insta_ros_driver full_launch.launch.py
+ros2 launch robot_bringup robot_bringup.launch.xml
 ```
-If an Insta360 ONE X2 is plugged in with USB, it should start the livestream, and publish the front and back fisheye images to the /camera/image_raw1 and /camera/image_raw2 topics respectively.
+
+ON COMPUTER
+```
+cd ~/ros2_ws
+colcon build
+. install/setup.bash
+ros2 launch navigation_bringup navigation_bringup.launch.xml
+```
+After launching navigation bringup, it will take like 30 seconds for it to get setup so you can place a goal. Once the terminal says it is resizing the costmap, you are good to go. To place a goal in RVIZ, click the Navigation2 Goal button and place the arrow on the map. Once set, the robot should start moving. To monitor robot progress, echo the `navigate_to_pose/_action/status` topic. Status 2 means it is in progress, Status 6 means it aborted to goal, and Status 4 means Goal Reached.
+
+Additional Note: The default turtlebot service may cause issues with the ability to generate consistent LiDAR scan. You can turn off this service with `sudo systemctl stop turtlebot4.service`
