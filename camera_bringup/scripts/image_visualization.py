@@ -10,8 +10,8 @@ import numpy as np
 class ImageVisualization(Node):
     def __init__(self):
         super().__init__('image_visualization')
-        self.subscription = self.create_subscription(Image, '/new_raw', self.image_callback, 10)
-        #self.subscription = self.create_subscription(CompressedImage,'/image_raw/compressed',self.compressed_image_callback,10)
+        #self.subscription = self.create_subscription(Image, '/new_raw', self.image_callback, 10)
+        self.subscription = self.create_subscription(CompressedImage,'/image_raw/compressed',self.compressed_image_callback,10)
         self.subscription  # prevent unused variable warning
         self.bridge = CvBridge()
 
