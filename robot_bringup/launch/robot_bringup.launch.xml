@@ -1,3 +1,4 @@
 <launch>
 	<include file="$(find-pkg-share rplidar_ros)/launch/rplidar_a1_launch.py" />
+	<include file="$(find-pkg-share robot_bringup)/launch/usb_cam.launch.py" />
 </launch>
