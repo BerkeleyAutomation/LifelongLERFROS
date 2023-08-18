@@ -1,0 +1,7 @@
+<launch>
+    <include file="$(find-pkg-share navigation_bringup)/launch/base_to_laser.launch.py" />
+    <include file="$(find-pkg-share turtlebot4_navigation)/launch/slam.launch.py" />
+    <include file="$(find-pkg-share nav2_bringup)/launch/navigation_launch.py" />
+    <include file="$(find-pkg-share navigation_bringup)/launch/nav_rviz.launch.py" />
+    
+</launch>
