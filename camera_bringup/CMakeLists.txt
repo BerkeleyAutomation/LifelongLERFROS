@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(robot_bringup)
+project(camera_bringup)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -13,14 +13,15 @@ find_package(rclpy REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
-install(DIRECTORY
-  config
-  DESTINATION share/${PROJECT_NAME}
-)
 
-install(DIRECTORY
-  launch
-  DESTINATION share/${PROJECT_NAME}
+include_directories(include)
+
+# Install Python modules
+ament_python_install_package(${PROJECT_NAME})
+# Install Python executables
+install(PROGRAMS
+  scripts/image_visualization.py
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)
