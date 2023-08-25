@@ -17,7 +17,7 @@ class ImageVisualization(Node):
 
     def image_callback(self, msg):
         try:
-            cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+            cv_image = self.bridge.imgmsg_to_cv2(msg, "yuv422")
         except Exception as e:
             self.get_logger().info(f"Error converting image: {e}")
             return
