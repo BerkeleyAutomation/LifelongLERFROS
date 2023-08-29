@@ -94,6 +94,7 @@ class NerfPoseCollection(Node):
         image_filename = os.path.join(self.output_folder_, f'image{self.image_counter:06d}.jpg')
         #print("IN HERE",flush=True)
         try:
+            
             t = self.tf_buffer_.lookup_transform(from_frame,to_frame,msg.header.stamp)
             with open(self.json_file_path_,"r") as json_file:
                 data = json.load(json_file)
