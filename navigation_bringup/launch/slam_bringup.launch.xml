@@ -1,0 +1,5 @@
+<launch>
+    <include file="$(find-pkg-share navigation_bringup)/launch/base_to_laser.launch.py" />
+    <include file="$(find-pkg-share navigation_bringup)/launch/base_to_cam.launch.py" />
+    <include file="$(find-pkg-share navigation_bringup)/launch/slam.launch.py" />
+</launch>
