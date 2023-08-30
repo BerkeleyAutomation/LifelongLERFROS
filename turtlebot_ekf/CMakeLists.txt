@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(camera_bringup)
+project(turtlebot_ekf)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -10,39 +10,23 @@ find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
+# Include Cpp "include" directory
+include_directories(include)
+
+ament_python_install_package(${PROJECT_NAME})
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
-include_directories(include)
-
-# Install Python modules
-ament_python_install_package(${PROJECT_NAME})
-# Install Python executables
-install(PROGRAMS
-  scripts/image_visualization.py
-  DESTINATION lib/${PROJECT_NAME}
-)
-
-install(PROGRAMS
-  scripts/collect_images_for_nerf.py
-  DESTINATION lib/${PROJECT_NAME}
-)
-
-install(PROGRAMS
-  scripts/nerf_collection_pose.py
-  DESTINATION lib/${PROJECT_NAME}
-)
-install(PROGRAMS
-  scripts/realsense_compressed_converter.py
-  DESTINATION lib/${PROJECT_NAME}
+install(DIRECTORY
+  params
+  DESTINATION share/${PROJECT_NAME}
 )
 
 install(DIRECTORY
   launch
   DESTINATION share/${PROJECT_NAME}
 )
-
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights

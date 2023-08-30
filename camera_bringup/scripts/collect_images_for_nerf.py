@@ -13,7 +13,7 @@ class NerfCollection(Node):
         super().__init__('nerf_collection')
         self.subscription = self.create_subscription(
             CompressedImage,
-            '/image_raw/compressed',  # Replace with your image topic name
+            '/camera/color/image_raw/compressed',  # Replace with your image topic name
             self.image_callback,
             10)
         self.bridge = CvBridge()

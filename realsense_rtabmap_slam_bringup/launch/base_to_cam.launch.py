@@ -21,7 +21,7 @@ def generate_launch_description():
                     "-3.14159",
                     "0", 
                     "1.5707963",
-                    "base_link",
+                    "base_link_realsense",
                     "camera",])
         ]
     )
