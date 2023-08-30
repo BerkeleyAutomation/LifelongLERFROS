@@ -8,6 +8,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import CompressedImage
 from cv_bridge import CvBridge
 from rclpy.time import Time
+from rclpy.duration import Duration
 from tf2_ros import TransformException
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
@@ -18,6 +19,7 @@ import numpy as np
 
 class NerfPoseCollection(Node):
     def __init__(self):
+        print("Hello there")
         super().__init__('nerf_pose_collection')
         self.subscription = self.create_subscription(
             CompressedImage,
@@ -79,6 +81,7 @@ class NerfPoseCollection(Node):
     def image_callback(self, msg):
         from_frame = 'map'
         to_frame = 'camera'
+        fixed_frame = 'odom'
         try:
             cv_image = self.bridge.compressed_imgmsg_to_cv2(msg,'bgr8')
         except Exception as e:
@@ -94,8 +97,10 @@ class NerfPoseCollection(Node):
         image_filename = os.path.join(self.output_folder_, f'image{self.image_counter:06d}.jpg')
         #print("IN HERE",flush=True)
         try:
-            
-            t = self.tf_buffer_.lookup_transform(from_frame,to_frame,msg.header.stamp)
+            #t = self.tf_buffer_.lookup_transform(from_frame,to_frame,msg.header.stamp)
+            t = self.tf_buffer_.lookup_transform_full(target_frame=from_frame,target_time=rclpy.time.Time(seconds=0,nanoseconds=0),
+                                                      source_frame=to_frame,source_time=rclpy.time.Time(seconds=0,nanoseconds=0),
+                                                      fixed_frame=fixed_frame,timeout=Duration(seconds=1,nanoseconds=0))
             with open(self.json_file_path_,"r") as json_file:
                 data = json.load(json_file)
             rotation = self.quaternion_rotation_matrix(t.transform.rotation)
@@ -111,8 +116,10 @@ class NerfPoseCollection(Node):
 
             cv2.imwrite(image_filename, cv_image)
             self.image_counter += 1
+            print(self.image_counter,flush=True)
         except TransformException as ex:
-            pass
+            print("Yeah, I suck",flush=True)
+            print(ex)
             # try:
             #     t = self.tf_buffer_.lookup_transform(to_frame,from_frame,rclpy.time.Time())
             #     cv2.imwrite(image_filename, cv_image)
