@@ -1,0 +1,6 @@
+<launch>
+    <include file="$(find-pkg-share realsense_rtabmap_slam_bringup)/launch/base_to_cam.launch.py" />
+    <include file="$(find-pkg-share realsense_rtabmap_slam_bringup)/launch/base_realsense_to_camera_link.launch.py" />
+    <include file="$(find-pkg-share camera_bringup)/launch/realsense_compression.launch.py" />
+    <include file="$(find-pkg-share realsense_rtabmap_slam_bringup)/launch/standard_rtabmap.launch.py" />
+</launch>

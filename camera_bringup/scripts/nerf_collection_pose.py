@@ -23,7 +23,7 @@ class NerfPoseCollection(Node):
         super().__init__('nerf_pose_collection')
         self.subscription = self.create_subscription(
             CompressedImage,
-            '/image_raw/compressed',  # Replace with your image topic name
+            '/camera/color/image_raw/compressed',  # Replace with your image topic name
             self.image_callback,
             10)
         self.tf_buffer_ = Buffer()
@@ -33,17 +33,16 @@ class NerfPoseCollection(Node):
         self.output_folder_ = 'output_images'
         self.json_file_path_ = os.path.join(self.output_folder_,'transforms.json')
         self.initial_tf_data_ = {
-            "w": 1024,
-            "h": 576,
-            "fl_x": 421.45653935203393,
-            "fl_y": 415.53758903338405,
-            "cx": 521.1061090239227,
-            "cy": 307.33126818633355,
-            "k1": -0.024406477561223126,
-            "k2": -0.0005270136831239189,
-            "k3": -4.2935555001798215e-06,
-            "k4": -0.00042943927562022905,
-            "camera_model": "OPENCV_FISHEYE",
+            "w": 424,
+            "h": 240,
+            "fl_x": 212.38006591796875,
+            "fl_y": 212.1753387451172,
+            "cx": 214.3612518310547,
+            "cy": 120.91046142578125,
+            "k1": -0.0553562305867672,
+            "k2": 0.0682036280632019,
+            "k3": -0.022622255608439445,
+            "camera_model": "OPENCV",
             "frames": []
 
         }
@@ -95,12 +94,11 @@ class NerfPoseCollection(Node):
 
         # Save the image to the output folder
         image_filename = os.path.join(self.output_folder_, f'image{self.image_counter:06d}.jpg')
-        #print("IN HERE",flush=True)
         try:
-            #t = self.tf_buffer_.lookup_transform(from_frame,to_frame,msg.header.stamp)
-            t = self.tf_buffer_.lookup_transform_full(target_frame=from_frame,target_time=rclpy.time.Time(seconds=0,nanoseconds=0),
-                                                      source_frame=to_frame,source_time=rclpy.time.Time(seconds=0,nanoseconds=0),
-                                                      fixed_frame=fixed_frame,timeout=Duration(seconds=1,nanoseconds=0))
+            t = self.tf_buffer_.lookup_transform(from_frame,to_frame,rclpy.time.Time())
+            #t = self.tf_buffer_.lookup_transform_full(target_frame=from_frame,target_time=rclpy.time.Time(seconds=0,nanoseconds=0),
+            #                                          source_frame=to_frame,source_time=rclpy.time.Time(seconds=0,nanoseconds=0),
+            #                                          fixed_frame=fixed_frame,timeout=Duration(seconds=1,nanoseconds=0))
             with open(self.json_file_path_,"r") as json_file:
                 data = json.load(json_file)
             rotation = self.quaternion_rotation_matrix(t.transform.rotation)
