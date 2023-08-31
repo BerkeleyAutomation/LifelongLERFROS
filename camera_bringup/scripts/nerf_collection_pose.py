@@ -13,6 +13,7 @@ from tf2_ros import TransformException
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 from geometry_msgs.msg import TransformStamped
+from lifelong_msgs.msg import ImagePose
 import tf2_geometry_msgs
 import json
 import numpy as np
@@ -22,8 +23,8 @@ class NerfPoseCollection(Node):
         print("Hello there")
         super().__init__('nerf_pose_collection')
         self.subscription = self.create_subscription(
-            CompressedImage,
-            '/camera/color/image_raw/compressed',  # Replace with your image topic name
+            ImagePose,
+            '/camera/color/imagepose',  # Replace with your image topic name
             self.image_callback,
             10)
         self.tf_buffer_ = Buffer()
@@ -78,11 +79,10 @@ class NerfPoseCollection(Node):
                                 
         return rot_matrix 
     def image_callback(self, msg):
-        from_frame = 'map'
-        to_frame = 'camera'
-        fixed_frame = 'odom'
         try:
-            cv_image = self.bridge.compressed_imgmsg_to_cv2(msg,'bgr8')
+            # cv_image = self.bridge.compressed_imgmsg_to_cv2(msg,'bgr8')
+            cv_image = self.bridge.imgmsg_to_cv2(msg.img)
+            print(cv_image.shape)
         except Exception as e:
             self.get_logger().error("Error converting image: %s" % str(e))
             return
@@ -92,42 +92,78 @@ class NerfPoseCollection(Node):
         if not os.path.exists(self.output_folder_):
             os.makedirs(self.output_folder_)
 
-        # Save the image to the output folder
-        image_filename = os.path.join(self.output_folder_, f'image{self.image_counter:06d}.jpg')
-        try:
-            t = self.tf_buffer_.lookup_transform(from_frame,to_frame,rclpy.time.Time())
-            #t = self.tf_buffer_.lookup_transform_full(target_frame=from_frame,target_time=rclpy.time.Time(seconds=0,nanoseconds=0),
-            #                                          source_frame=to_frame,source_time=rclpy.time.Time(seconds=0,nanoseconds=0),
-            #                                          fixed_frame=fixed_frame,timeout=Duration(seconds=1,nanoseconds=0))
-            with open(self.json_file_path_,"r") as json_file:
-                data = json.load(json_file)
-            rotation = self.quaternion_rotation_matrix(t.transform.rotation)
-            translation = np.array([t.transform.translation.x,t.transform.translation.y,t.transform.translation.z])
-            tf_matrix = np.column_stack((rotation,translation))
-            tf_matrix = np.row_stack((tf_matrix,np.array([0,0,0,1])))
-            frame_entry = {}
-            frame_entry["file_path"] = f'image{self.image_counter:06d}.jpg'
-            frame_entry["transform_matrix"] = tf_matrix.tolist()
-            data["frames"].append(frame_entry)
-            with open(self.json_file_path_,"w") as json_file:
-                json.dump(data,json_file)
+        pose = msg.pose
+        rotation = self.quaternion_rotation_matrix(pose.orientation)
+        translation = np.array([pose.position.x,pose.position.y,pose.position.z])
 
-            cv2.imwrite(image_filename, cv_image)
-            self.image_counter += 1
-            print(self.image_counter,flush=True)
-        except TransformException as ex:
-            print("Yeah, I suck",flush=True)
-            print(ex)
-            # try:
-            #     t = self.tf_buffer_.lookup_transform(to_frame,from_frame,rclpy.time.Time())
-            #     cv2.imwrite(image_filename, cv_image)
-            #     self.image_counter += 1
-            # except TransformException as ex:
-            #     print("Tears pain sadness")
-        #print(timestamp,flush=True)
-        #print(type(timestamp),flush=True)
-        #cv2.imwrite(image_filename, cv_image)
-        #self.get_logger().info(f'Saved image to {image_filename}')
+        image_filename = os.path.join(self.output_folder_, f'image{self.image_counter:06d}.jpg')
+
+        with open(self.json_file_path_,"r") as json_file:
+            data = json.load(json_file)
+        tf_matrix = np.column_stack((rotation,translation))
+        tf_matrix = np.row_stack((tf_matrix,np.array([0,0,0,1])))
+        frame_entry = {}
+        frame_entry["file_path"] = f'image{self.image_counter:06d}.jpg'
+        frame_entry["transform_matrix"] = tf_matrix.tolist()
+        data["frames"].append(frame_entry)
+        with open(self.json_file_path_,"w") as json_file:
+            json.dump(data,json_file)
+
+        cv2.imwrite(image_filename, cv_image)
+        self.image_counter += 1
+        print(self.image_counter,flush=True)
+        
+    # def image_callback(self, msg):
+    #     from_frame = 'map'
+    #     to_frame = 'camera'
+    #     fixed_frame = 'odom'
+    #     try:
+    #         cv_image = self.bridge.compressed_imgmsg_to_cv2(msg,'bgr8')
+    #     except Exception as e:
+    #         self.get_logger().error("Error converting image: %s" % str(e))
+    #         return
+
+    #     # Specify the folder where images will be saved
+        
+    #     if not os.path.exists(self.output_folder_):
+    #         os.makedirs(self.output_folder_)
+
+    #     # Save the image to the output folder
+    #     image_filename = os.path.join(self.output_folder_, f'image{self.image_counter:06d}.jpg')
+    #     try:
+    #         t = self.tf_buffer_.lookup_transform(from_frame,to_frame,rclpy.time.Time())
+    #         #t = self.tf_buffer_.lookup_transform_full(target_frame=from_frame,target_time=rclpy.time.Time(seconds=0,nanoseconds=0),
+    #         #                                          source_frame=to_frame,source_time=rclpy.time.Time(seconds=0,nanoseconds=0),
+    #         #                                          fixed_frame=fixed_frame,timeout=Duration(seconds=1,nanoseconds=0))
+    #         with open(self.json_file_path_,"r") as json_file:
+    #             data = json.load(json_file)
+    #         rotation = self.quaternion_rotation_matrix(t.transform.rotation)
+    #         translation = np.array([t.transform.translation.x,t.transform.translation.y,t.transform.translation.z])
+    #         tf_matrix = np.column_stack((rotation,translation))
+    #         tf_matrix = np.row_stack((tf_matrix,np.array([0,0,0,1])))
+    #         frame_entry = {}
+    #         frame_entry["file_path"] = f'image{self.image_counter:06d}.jpg'
+    #         frame_entry["transform_matrix"] = tf_matrix.tolist()
+    #         data["frames"].append(frame_entry)
+    #         with open(self.json_file_path_,"w") as json_file:
+    #             json.dump(data,json_file)
+
+    #         cv2.imwrite(image_filename, cv_image)
+    #         self.image_counter += 1
+    #         print(self.image_counter,flush=True)
+    #     except TransformException as ex:
+    #         print("Yeah, I suck",flush=True)
+    #         print(ex)
+    #         # try:
+    #         #     t = self.tf_buffer_.lookup_transform(to_frame,from_frame,rclpy.time.Time())
+    #         #     cv2.imwrite(image_filename, cv_image)
+    #         #     self.image_counter += 1
+    #         # except TransformException as ex:
+    #         #     print("Tears pain sadness")
+    #     #print(timestamp,flush=True)
+    #     #print(type(timestamp),flush=True)
+    #     #cv2.imwrite(image_filename, cv_image)
+    #     #self.get_logger().info(f'Saved image to {image_filename}')
 
 def main(args=None):
     rclpy.init(args=args)
