@@ -84,6 +84,7 @@ class ImagePoseSubPub(Node):
                                 
         return rot_matrix 
     def image_callback(self, msg):
+        
         from_frame = 'map'
         to_frame = 'camera'
         fixed_frame = 'odom'
@@ -113,13 +114,13 @@ class ImagePoseSubPub(Node):
 
         # Filter images
         pose_to_pub = Pose()
-        if self.last_img_pos is not None:
-            rot_dist = 1 - np.dot(self.last_img_quat, quaternion) ** 2
-            pos_dist = np.linalg.norm(self.last_img_pos - translation)
-            dist = 0.5 * rot_dist + 0.5 * pos_dist
-            if dist < .05:
-                #exit 
-                return 
+        # if self.last_img_pos is not None:
+        #     rot_dist = 1 - np.dot(self.last_img_quat, quaternion) ** 2
+        #     pos_dist = np.linalg.norm(self.last_img_pos - translation)
+        #     dist = 0.5 * rot_dist + 0.5 * pos_dist
+        #     if dist < .05:
+        #         #exit 
+        #         return 
 
         self.last_img_pos = translation
         self.last_img_quat = quaternion
@@ -143,7 +144,7 @@ class ImagePoseSubPub(Node):
         pub_msg.k1 = self.initial_tf_data_['k1']
         pub_msg.k2 = self.initial_tf_data_['k2']
         pub_msg.k3 = self.initial_tf_data_['k3']
-        
+        print("IN HERE",flush=True)
         self.publisher.publish(pub_msg)
 
 def main(args=None):

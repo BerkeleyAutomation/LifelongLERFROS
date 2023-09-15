@@ -1,6 +1,7 @@
 
 geometry_msgs/Pose pose
 sensor_msgs/Image img
+sensor_msgs/Image depth
 uint32 w                
 uint32 h
 float32 fl_x
