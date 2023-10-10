@@ -30,6 +30,7 @@ class NerfPoseCollection(Node):
         self.tf_listener_ = TransformListener(self.tf_buffer_, self)
         self.bridge = CvBridge()
         self.image_counter = 0
+        self.i_ = 0
         self.output_folder_ = 'output_images'
         self.json_file_path_ = os.path.join(self.output_folder_,'transforms.json')
         self.initial_tf_data_ = {
@@ -46,8 +47,8 @@ class NerfPoseCollection(Node):
             "frames": []
 
         }
-        with open(self.json_file_path_,"w") as write_file:
-            json.dump(self.initial_tf_data_,write_file)
+        #with open(self.json_file_path_,"w") as write_file:
+        #    json.dump(self.initial_tf_data_,write_file)
 
     def quaternion_rotation_matrix(self,Q):
         # Extract the values from Q
@@ -99,40 +100,42 @@ class NerfPoseCollection(Node):
             #t = self.tf_buffer_.lookup_transform_full(target_frame=from_frame,target_time=rclpy.time.Time(seconds=0,nanoseconds=0),
             #                                          source_frame=to_frame,source_time=rclpy.time.Time(seconds=0,nanoseconds=0),
             #                                          fixed_frame=fixed_frame,timeout=Duration(seconds=1,nanoseconds=0))
-            with open(self.json_file_path_,"r") as json_file:
-                data = json.load(json_file)
-            rotation = self.quaternion_rotation_matrix(t.transform.rotation)
-            translation = np.array([t.transform.translation.x,t.transform.translation.y,t.transform.translation.z])
-            tf_matrix = np.column_stack((rotation,translation))
-            tf_matrix = np.row_stack((tf_matrix,np.array([0,0,0,1])))
-            frame_entry = {}
-            frame_entry["file_path"] = f'image{self.image_counter:06d}.jpg'
-            frame_entry["transform_matrix"] = tf_matrix.tolist()
-            data["frames"].append(frame_entry)
-            with open(self.json_file_path_,"w") as json_file:
-                json.dump(data,json_file)
+            self.i_ += 1
+            if(self.i_ % 5 == 0):
+                #with open(self.json_file_path_,"r") as json_file:
+                #    data = json.load(json_file)
+                rotation = self.quaternion_rotation_matrix(t.transform.rotation)
+                translation = np.array([t.transform.translation.x,t.transform.translation.y,t.transform.translation.z])
+                tf_matrix = np.column_stack((rotation,translation))
+                tf_matrix = np.row_stack((tf_matrix,np.array([0,0,0,1])))
+                frame_entry = {}
+                frame_entry["file_path"] = f'image{self.image_counter:06d}.jpg'
+                frame_entry["transform_matrix"] = tf_matrix.tolist()
+                self.initial_tf_data_["frames"].append(frame_entry)
+                #with open(self.json_file_path_,"w") as json_file:
+                #    json.dump(data,json_file)
 
-            cv2.imwrite(image_filename, cv_image)
-            self.image_counter += 1
-            print(self.image_counter,flush=True)
+                cv2.imwrite(image_filename, cv_image)
+                self.image_counter += 1
+                print(self.image_counter,flush=True)
         except TransformException as ex:
             print("Yeah, I suck",flush=True)
             print(ex)
-            # try:
-            #     t = self.tf_buffer_.lookup_transform(to_frame,from_frame,rclpy.time.Time())
-            #     cv2.imwrite(image_filename, cv_image)
-            #     self.image_counter += 1
-            # except TransformException as ex:
-            #     print("Tears pain sadness")
-        #print(timestamp,flush=True)
-        #print(type(timestamp),flush=True)
-        #cv2.imwrite(image_filename, cv_image)
-        #self.get_logger().info(f'Saved image to {image_filename}')
+
+    def saveJSON(self):
+        print("In here")
+        with open(self.json_file_path_,"w") as json_file:
+            json.dump(self.initial_tf_data_,json_file)
+        print("Outta here")
 
 def main(args=None):
     rclpy.init(args=args)
     nerf_pose_collection = NerfPoseCollection()
-    rclpy.spin(nerf_pose_collection)
+    try:
+        rclpy.spin(nerf_pose_collection)
+        
+    except KeyboardInterrupt:
+        nerf_pose_collection.saveJSON()
     nerf_pose_collection.destroy_node()
     rclpy.shutdown()
 
