@@ -30,10 +30,11 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'json_file_path',               'default': "''", 'description': 'allows advanced configuration'},
                            {'name': 'log_level',                    'default': 'info', 'description': 'debug log level [DEBUG|INFO|WARN|ERROR|FATAL]'},
                            {'name': 'output',                       'default': 'screen', 'description': 'pipe node output [screen|log]'},
-                           {'name': 'depth_module.profile',         'default': '424,240,15', 'description': 'depth module profile'},                           
+                           {'name': 'depth_module.profile',         'default': '640,480,15', 'description': 'depth module profile'},                           
                            {'name': 'enable_depth',                 'default': 'true', 'description': 'enable depth stream'},
-                           {'name': 'rgb_camera.profile',           'default': '424,240,15', 'description': 'color image width'},
-                           {'name': 'rgb_camera.enable_auto_exposure', 'default': 'true', 'description': 'enable/disable auto exposure for color image'},
+                           {'name': 'rgb_camera.profile',           'default': '640,480,15', 'description': 'color image width'},
+                           {'name': 'rgb_camera.enable_auto_exposure', 'default': 'false', 'description': 'enable/disable auto exposure for color image'},
+                           {'name': 'rgb_camera.exposure', 'default': '350', 'description': 'enable/disable auto exposure for color image'},
                            {'name': 'enable_color',                 'default': 'true', 'description': 'enable color stream'},
                            {'name': 'enable_infra1',                'default': 'false', 'description': 'enable infra1 stream'},
                            {'name': 'enable_infra2',                'default': 'false', 'description': 'enable infra2 stream'},
@@ -45,7 +46,7 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'accel_fps',                    'default': '0', 'description': "''"},                           
                            {'name': 'enable_gyro',                  'default': 'true', 'description': "''"},                           
                            {'name': 'enable_accel',                 'default': 'true', 'description': "''"},                           
-                           {'name': 'enable_pose',                  'default': 'true', 'description': "''"},                           
+                           {'name': 'enable_pose',                  'default': 'false', 'description': "''"},                           
                            {'name': 'pose_fps',                     'default': '200', 'description': "''"},                           
                            {'name': 'pointcloud.enable',            'default': 'false', 'description': ''}, 
                            {'name': 'pointcloud.stream_filter',     'default': '2', 'description': 'texture stream for pointcloud'},
@@ -63,11 +64,11 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'diagnostics_period',           'default': '0.0', 'description': 'Rate of publishing diagnostics. 0=Disabled'},
                            {'name': 'decimation_filter.enable',     'default': 'false', 'description': 'Rate of publishing static_tf'},
                            {'name': 'rosbag_filename',              'default': "''", 'description': 'A realsense bagfile to run from as a device'},
-                           {'name': 'depth_module.exposure.1',      'default': '7500', 'description': 'Depth module first exposure value. Used for hdr_merge filter'},
+                           #{'name': 'depth_module.exposure.1',      'default': '7500', 'description': 'Depth module first exposure value. Used for hdr_merge filter'},
                            {'name': 'depth_module.gain.1',          'default': '16', 'description': 'Depth module first gain value. Used for hdr_merge filter'},
-                           {'name': 'depth_module.exposure.2',      'default': '1', 'description': 'Depth module second exposure value. Used for hdr_merge filter'},
+                           #{'name': 'depth_module.exposure.2',      'default': '1', 'description': 'Depth module second exposure value. Used for hdr_merge filter'},
                            {'name': 'depth_module.gain.2',          'default': '16', 'description': 'Depth module second gain value. Used for hdr_merge filter'},
-                           {'name': 'depth_module.exposure',        'default': '8500', 'description': 'Depth module manual exposure value'},
+                           #{'name': 'depth_module.exposure',        'default': '8500', 'description': 'Depth module manual exposure value'},
                            {'name': 'depth_module.hdr_enabled',     'default': 'false', 'description': 'Depth module hdr enablement flag. Used for hdr_merge filter'},
                            {'name': 'depth_module.enable_auto_exposure', 'default': 'true', 'description': 'enable/disable auto exposure for depth image'},
                            {'name': 'hdr_merge.enable',             'default': 'false', 'description': 'hdr_merge filter enablement flag'},
@@ -124,4 +125,8 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     return LaunchDescription(declare_configurable_parameters(configurable_parameters) + [
         OpaqueFunction(function=launch_setup)
+<<<<<<< HEAD
     ])
+=======
+    ])
+>>>>>>> f46f775751e794cf53f491ae4c764bafb765d8fa

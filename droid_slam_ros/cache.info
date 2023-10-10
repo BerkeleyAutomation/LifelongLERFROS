@@ -1,0 +1,1 @@
+{"tile_size_range": [0.05, 0.5], "tile_size_res": 7, "stride_scaler": 0.5, "image_shape": [480, 640], "model_name": "openclip_ViT-B-16_laion2b_s34b_b88k"}

@@ -34,12 +34,12 @@ class NerfPoseCollection(Node):
         self.output_folder_ = 'output_images'
         self.json_file_path_ = os.path.join(self.output_folder_,'transforms.json')
         self.initial_tf_data_ = {
-            "w": 424,
-            "h": 240,
-            "fl_x": 212.38006591796875,
-            "fl_y": 212.1753387451172,
-            "cx": 214.3612518310547,
-            "cy": 120.91046142578125,
+            "w": 424*2,
+            "h": 240*2,
+            "fl_x": 2*212.38006591796875,
+            "fl_y": 2*212.1753387451172,
+            "cx": 2*214.3612518310547,
+            "cy": 2*120.91046142578125,
             "k1": -0.0553562305867672,
             "k2": 0.0682036280632019,
             "k3": -0.022622255608439445,
@@ -96,7 +96,7 @@ class NerfPoseCollection(Node):
         # Save the image to the output folder
         image_filename = os.path.join(self.output_folder_, f'image{self.image_counter:06d}.jpg')
         try:
-            t = self.tf_buffer_.lookup_transform(from_frame,to_frame,rclpy.time.Time())
+            t = self.tf_buffer_.lookup_transform(from_frame,to_frame,msg.header.stamp,timeout=.1)
             #t = self.tf_buffer_.lookup_transform_full(target_frame=from_frame,target_time=rclpy.time.Time(seconds=0,nanoseconds=0),
             #                                          source_frame=to_frame,source_time=rclpy.time.Time(seconds=0,nanoseconds=0),
             #                                          fixed_frame=fixed_frame,timeout=Duration(seconds=1,nanoseconds=0))

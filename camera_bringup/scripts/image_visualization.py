@@ -10,9 +10,9 @@ import numpy as np
 class ImageVisualization(Node):
     def __init__(self):
         super().__init__('image_visualization')
-        self.subscription = self.create_subscription(Image, '/camera/depth/image_rect_raw', self.image_callback, 10)
+        self.depth_subscriber_ = self.create_subscription(Image, '/camera/depth/image_rect_raw', self.image_callback, 10)
+        self.color_subscriber_ = self.create_subscription(CompressedImage, '/camera/color/image_raw/compressed', self.compressed_image_callback, 10)
         #self.subscription = self.create_subscription(CompressedImage,'/camera/color/image_raw/compressed',self.compressed_image_callback,10)
-        self.subscription  # prevent unused variable warning
         self.bridge = CvBridge()
 
     def image_callback(self, msg):
@@ -22,12 +22,12 @@ class ImageVisualization(Node):
             self.get_logger().info(f"Error converting image: {e}")
             return
 
-        cv2.imshow("Received Image", cv_image)
+        cv2.imshow("Depth Image", cv_image)
         cv2.waitKey(2)  # This is necessary for the OpenCV window to update
 
     def compressed_image_callback(self,msg):
         image_np = self.bridge.compressed_imgmsg_to_cv2(msg,'bgr8')
-        cv2.imshow("Received image",image_np)
+        cv2.imshow("Color image",image_np)
         cv2.waitKey(2)
 
 def main(args=None):
