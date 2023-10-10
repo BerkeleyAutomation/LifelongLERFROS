@@ -1,1 +1,9 @@
 .vscode/
+droid_slam_ros/build/*
+droid_slam_ros/cache.npy
+droid_slam_ros/cache/*
+droid_slam_ros/outputs*
+droid_slam_ros/scripts/output_images*
+droid_slam_ros/output_images*
+droid_slam_ros/droid_slam/__pycache__/*
+droid_slam_ros/data/output_images/*
