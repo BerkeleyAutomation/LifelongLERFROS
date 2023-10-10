@@ -125,4 +125,8 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     return LaunchDescription(declare_configurable_parameters(configurable_parameters) + [
         OpaqueFunction(function=launch_setup)
+<<<<<<< HEAD
     ])
+=======
+    ])
+>>>>>>> f46f775751e794cf53f491ae4c764bafb765d8fa

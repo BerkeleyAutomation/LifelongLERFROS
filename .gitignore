@@ -7,3 +7,4 @@ droid_slam_ros/scripts/output_images*
 droid_slam_ros/output_images*
 droid_slam_ros/droid_slam/__pycache__/*
 droid_slam_ros/data/output_images/*
+droid_slam_ros/dist/*
