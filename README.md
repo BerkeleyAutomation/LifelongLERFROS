@@ -20,6 +20,7 @@ sudo apt-get install ros-humble-nav2-bringup
 mkdir -p ~/ros2_ws/src
 cd ~/ros2_ws
 git clone https://github.com/BerkeleyAutomation/LifelongLERFROS.git src
+cd src
 source env_setup.bash
 ```
 
