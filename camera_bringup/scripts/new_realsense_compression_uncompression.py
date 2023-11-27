@@ -10,13 +10,13 @@ from cv_bridge import CvBridge
 class ImageRepublisherNode(Node):
     def __init__(self):
         super().__init__('image_republisher')
-        self.color_sub = self.create_subscription(CompressedImage, '/imageo_compressedo', self.color_callback, 10)
+        self.color_sub = self.create_subscription(Image, '/ros2_camera/color/image_raw', self.color_callback, 10)
         self.color_pub = self.create_publisher(Image, '/repub_image_raw', 10)
         self.cv_bridge = CvBridge()
 
     def color_callback(self, msg):
         try:
-            color_image = self.cv_bridge.compressed_imgmsg_to_cv2(msg)
+            color_image = self.cv_bridge.imgmsg_to_cv2(msg)
             color_msg = self.cv_bridge.cv2_to_imgmsg(color_image, encoding='bgr8')
             color_msg.header = msg.header
             self.color_pub.publish(color_msg)

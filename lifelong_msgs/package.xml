@@ -1,18 +1,13 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-<<<<<<<< HEAD:lifelong_msgs/package.xml
   <name>lifelong_msgs</name>
-========
-  <name>realsense_rtabmap_slam_bringup</name>
->>>>>>>> f46f775751e794cf53f491ae4c764bafb765d8fa:realsense_rtabmap_slam_bringup/package.xml
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="kush_hari@berkeley.edu">benchturtle</maintainer>
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-<<<<<<<< HEAD:lifelong_msgs/package.xml
   <build_depend>rosidl_default_generators</build_depend>
 
   <build_depend>sensor_msgs</build_depend>
@@ -24,12 +19,10 @@
   <exec_depend>rosidl_default_runtime</exec_depend>
 
   <member_of_group>rosidl_interface_packages</member_of_group>
-========
   <buildtool_depend>ament_cmake_python</buildtool_depend>
   
   <depend>rclcpp</depend>
   <depend>rclpy</depend>
->>>>>>>> f46f775751e794cf53f491ae4c764bafb765d8fa:realsense_rtabmap_slam_bringup/package.xml
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

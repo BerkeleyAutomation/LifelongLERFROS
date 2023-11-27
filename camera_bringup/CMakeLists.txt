@@ -34,12 +34,27 @@ install(PROGRAMS
 )
 
 install(PROGRAMS
+  scripts/color_image_compression_node.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(PROGRAMS
   scripts/nerf_collection_pose.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
 install(PROGRAMS
   scripts/realsense_compressed_converter.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(PROGRAMS
+  scripts/realsense_uncompression_compression.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(PROGRAMS
+  scripts/new_realsense_compression_uncompression.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
