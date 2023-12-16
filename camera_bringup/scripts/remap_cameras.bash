@@ -6,10 +6,10 @@ sudo unlink /dev/camRight
 
 v4l2-ctl --list-devices > cam_devices.txt
 SUB='Arducam_16MP: Arducam_16MP'
-KERNEL_FRONT="2.1):"
-KERNEL_BACK="2.2):"
-KERNEL_LEFT="2.3):"
-KERNEL_RIGHT="2.4):"
+KERNEL_FRONT="14.0-3):"
+KERNEL_BACK="14.0-6.4):"
+KERNEL_LEFT="14.0-2):"
+KERNEL_RIGHT="14.0-7):"
 FOUND_FRONT=false
 FOUND_BACK=false
 FOUND_LEFT=false
