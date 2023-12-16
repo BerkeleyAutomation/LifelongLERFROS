@@ -85,6 +85,36 @@ gst-launch-1.0 udpsrc port=5001 ! \
     application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! \
     videoconvert ! autovideosink
 ```
+
+## Setting Up 4 Arducams:
+There is a specific order that all of the cameras need to be plugged into. The back camera needs to be plugged into Justin's usb-c dongle at in the closest port to the usb-c connector. The dongle is then plugged into the usb-c port labeled 2 (one closer to the center of the robot). Left camera plugs into the bottom usb-a connector on the leftside of the nuc (left from robot frame). Front camera plugs into the port right above the left camera and the right camera plugs into the only free port on the right. 
+
+# Running commands: 
+Connect to the robot and remap the ports.  
+```
+ssh fetch@fetch59.local # password robotics
+sr2
+cd ~/ros2_ws
+colcon_build
+. install/setup.bash
+cd src/camera_bringup/scripts
+sudo bash remap_cameras.bash
+```
+After that, while still in the fetch run the launch script
+```
+cd ~/ros2_ws
+colcon_build
+. install/setup.bash
+source /opt/ros/foxy/setup.bash
+ros2 launch camera_bringup 4_camera_launch.py
+```
+If you get the error: `terminate unrecognized character "char*"`. Run this command:
+```
+sudo usermod -a -G video $LOGNAME
+```
+To confirm this works run `groups` you should see `video` listed. If not then log back out and log back in and rerun the commands for the launch file. 
+
+
 ## Run Navigation 11/18 (Still under development)
 
 Okay, so we got a lot of moving pieces to get this working. We will consolidate soon.
