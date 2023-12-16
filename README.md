@@ -89,7 +89,6 @@ gst-launch-1.0 udpsrc port=5001 ! \
 ## Setting Up 4 Arducams:
 There is a specific order that all of the cameras need to be plugged into. The back camera needs to be plugged into Justin's usb-c dongle at in the closest port to the usb-c connector. The dongle is then plugged into the usb-c port labeled 2 (one closer to the center of the robot). Left camera plugs into the bottom usb-a connector on the leftside of the nuc (left from robot frame). Front camera plugs into the port right above the left camera and the right camera plugs into the only free port on the right. 
 
-**Running commands:** 
 Connect to the robot and remap the ports.  
 ```
 ssh fetch@fetch59.local # password robotics
