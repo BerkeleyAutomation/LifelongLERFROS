@@ -62,7 +62,29 @@ ros2 launch droid_slam_ros droid_slam.launch.py
 From there, you should get a Viser link and can view Droid-SLAM in action.
 ## Installation
 
+## Setting up Joystick
+Connect to the robot and run these commands to be able to teleop the fetch.
+```
+ssh fetch@fetch59.local # password robotics
+sr1
+sudo systemctl restart roscore.service
+sudo systemctl restart robot.service
+```
+Then press the center playstation button on the joystick and if you see a lone solid red light then you're connected.
 
+## Setting Up Gstreamer
+We need to Gstream the main arducam for high FPS to do DROID-SLAM. The other 3 cameras can run slower and only be used for the LEGS. 
+To send images, on fetch run (ensure that the specified device is the front-facing arducam): 
+```
+sudo gst-launch-1.0 v4l2src device=/dev/video0 ! image/jpeg,width=640,height=480,framerate=15/1 ! jpegdec ! video/x-raw ! videoconvert ! x264enc tune=zerolatency bitrate=400000 ! rtph264pay config-interval=1 ! udpsink host=10.65.87.27 port=5001 sync=false
+```
+
+To receive images, on the computer run: 
+```
+gst-launch-1.0 udpsrc port=5001 ! \
+    application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! \
+    videoconvert ! autovideosink
+```
 ## Run Navigation 11/18 (Still under development)
 
 Okay, so we got a lot of moving pieces to get this working. We will consolidate soon.
