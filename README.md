@@ -115,6 +115,17 @@ sudo usermod -a -G video $LOGNAME
 ```
 To confirm this works run `groups` you should see `video` listed. If not then log back out and log back in and rerun the commands for the launch file. 
 
+On the computer then go into the lifelong_lerf_ws and run the script to uncompress the images
+```
+cd ~/lifelong_lerf_ws
+colcon build
+. install/setup.bash
+ros2 run camera_bringup 4_arducam_compressed_converter.py
+```
+
+You should now see all four cameras publishing on `/repub/cam<direction>/image_raw` and you can open them up on rviz to have a look.
+
+
 
 ## Run Navigation 11/18 (Still under development)
 
