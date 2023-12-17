@@ -1,7 +1,7 @@
 # Lifelong LERF ROS
 This repo will contain the ROS2 workspace code for the Lifelong LERF project. Currently, it can stream color and depth images from a Realsense D457 and teleop move a Turtlebot4 with keyboard commands. This has been tested on Ubuntu 22.04.
 
-Note: Occasionally this repo uses the convention `sr1` and `sr2`. This is equivalent to `source /opt/ros/noetic/setup.bash` and `source /opt/ros/foxy/setup.bash` respectively.
+Note: Occasionally this repo uses the convention `sr1` and `sr2`. This is equivalent to `source /opt/ros/noetic/setup.bash` and `source ~/ros2_foxy/install/setup.bash && source /opt/ros/foxy/setup.bash` respectively.
 
 ## Turtlebot Installation and Setup
 To setup the Turtlebot to talk to the computer and vice versa, follow the instructions in this link: https://turtlebot.github.io/turtlebot4-user-manual/setup/basic.html.
