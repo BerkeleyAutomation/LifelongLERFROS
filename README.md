@@ -1,6 +1,8 @@
 # Lifelong LERF ROS
 This repo will contain the ROS2 workspace code for the Lifelong LERF project. Currently, it can stream color and depth images from a Realsense D457 and teleop move a Turtlebot4 with keyboard commands. This has been tested on Ubuntu 22.04.
 
+Note: Occasionally this repo uses the convention `sr1` and `sr2`. This is equivalent to `source /opt/ros/noetic/setup.bash` and `source ~/ros2_foxy/install/setup.bash && source /opt/ros/foxy/setup.bash` respectively.
+
 ## Turtlebot Installation and Setup
 To setup the Turtlebot to talk to the computer and vice versa, follow the instructions in this link: https://turtlebot.github.io/turtlebot4-user-manual/setup/basic.html.
 If Donatello is nearby, follow these instructions to setup and install necessary libraries
@@ -61,6 +63,68 @@ ros2 launch droid_slam_ros droid_slam.launch.py
 ```
 From there, you should get a Viser link and can view Droid-SLAM in action.
 ## Installation
+
+## Setting up Joystick
+Connect to the robot and run these commands to be able to teleop the fetch.
+```
+ssh fetch@fetch59.local # password robotics
+sr1
+sudo systemctl restart roscore.service
+sudo systemctl restart robot.service
+```
+Then press the center playstation button on the joystick and if you see a lone solid red light then you're connected.
+
+## Setting Up Gstreamer
+We need to Gstream the main arducam for high FPS to do DROID-SLAM. The other 3 cameras can run slower and only be used for the LEGS. 
+To send images, on fetch run (ensure that the specified device is the front-facing arducam): 
+```
+sudo gst-launch-1.0 v4l2src device=/dev/video0 ! image/jpeg,width=640,height=480,framerate=15/1 ! jpegdec ! video/x-raw ! videoconvert ! x264enc tune=zerolatency bitrate=400000 ! rtph264pay config-interval=1 ! udpsink host=10.65.87.27 port=5001 sync=false
+```
+
+To receive images, on the computer run: 
+```
+gst-launch-1.0 udpsrc port=5001 ! \
+    application/x-rtp, payload=96 ! rtph264depay ! avdec_h264 ! \
+    videoconvert ! autovideosink
+```
+
+## Setting Up 4 Arducams:
+There is a specific order that all of the cameras need to be plugged into. The back camera needs to be plugged into Justin's usb-c dongle at in the closest port to the usb-c connector. The dongle is then plugged into the usb-c port labeled 2 (one closer to the center of the robot). Front camera plugs into the bottom usb-a connector on the leftside of the nuc (left from robot frame). Left camera plugs into the port right above the left camera and the right camera plugs into the only free port on the right. 
+
+Connect to the robot and remap the ports.  
+```
+ssh fetch@fetch59.local # password robotics
+sr2
+cd ~/ros2_ws
+colcon_build
+. install/setup.bash
+cd src/camera_bringup/scripts
+sudo bash remap_cameras.bash
+```
+After that, while still in the fetch run the launch script
+```
+cd ~/ros2_ws
+colcon_build
+. install/setup.bash
+source /opt/ros/foxy/setup.bash
+ros2 launch camera_bringup 4_camera_launch.py
+```
+If you get the error: `terminate unrecognized character "char*"`. Run this command:
+```
+sudo usermod -a -G video $LOGNAME
+```
+To confirm this works run `groups` you should see `video` listed. If not then log back out and log back in and rerun the commands for the launch file. 
+
+On the computer then go into the lifelong_lerf_ws and run the script to uncompress the images
+```
+cd ~/lifelong_lerf_ws
+colcon build
+. install/setup.bash
+ros2 run camera_bringup 4_arducam_compressed_converter.py
+```
+
+You should now see all four cameras publishing on `/repub/cam<direction>/image_raw` and you can open them up on rviz to have a look.
+
 
 
 ## Run Navigation 11/18 (Still under development)
