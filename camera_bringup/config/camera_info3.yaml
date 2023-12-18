@@ -1,0 +1,23 @@
+image_width: 640
+image_height: 480
+camera_name: camRight
+# right camera values:
+camera matrix: 
+  rows: 3
+  cols: 3
+  data: [549.06850891,0.,336.5228806,0.,548.1345095,264.33637872,0.,0.,1.]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [-0.38533923,0.21106691,-0.00181852,-0.00088845, -0.19999498]
+# old matrices, idk what to do with them
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [0.999978, 0.002789, -0.006046, -0.002816, 0.999986, -0.004401, 0.006034, 0.004417, 0.999972]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [393.653800, 0.000000, 322.797939, 0.000000, 0.000000, 393.653800, 241.090902, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000]
+

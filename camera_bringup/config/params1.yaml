@@ -7,8 +7,8 @@
       pixel_format: "mjpeg2rgb"  # see usb_cam/supported_formats for list of supported formats
       image_width: 640
       image_height: 480
-      camera_name: "test_camera"
-      camera_info_url: "package://camera_bringup/config/camera_info.yaml"
+      camera_name: "camBack"
+      camera_info_url: "package://camera_bringup/config/camera_info1.yaml"
       brightness: -1
       contrast: -1
       saturation: -1
