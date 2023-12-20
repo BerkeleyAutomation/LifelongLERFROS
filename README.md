@@ -123,7 +123,9 @@ colcon build
 ros2 run camera_bringup 4_arducam_compressed_converter.py
 ```
 
-You should now see all four cameras publishing on `/repub/cam<direction>/image_raw` and you can open them up on rviz to have a look.
+You should now see all four cameras publishing on `/repub/cam<direction>/image_raw`.
+
+You can see their videos by running `view_4_cam.py` located in `camera_bring/scripts/` (for some reason ros doens't like working with this)
 
 
 
