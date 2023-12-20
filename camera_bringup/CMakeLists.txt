@@ -59,12 +59,22 @@ install(PROGRAMS
 )
 
 install(PROGRAMS
+  scripts/compress_realsense_node.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(PROGRAMS
   scripts/image_pose_filtering.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
 install(PROGRAMS
   scripts/4_arducam_compressed_converter.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(PROGRAMS
+  scripts/view_4_cam.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

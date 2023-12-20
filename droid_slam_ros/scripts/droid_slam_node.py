@@ -22,13 +22,17 @@ import argparse
 import rclpy
 import json
 from sensor_msgs.msg import Image as ROSImage
-
+from geometry_msgs.msg import TransformStamped
+from sensor_msgs.msg import PointCloud2, PointField
+from sensor_msgs_py import point_cloud2 as pc2
 from torch.multiprocessing import Process
 from droid import Droid
 import message_filters
+from tf2_ros import TransformBroadcaster
 
 import torch.nn.functional as F
-
+import droid_backends
+from lietorch import SE3
 
 class DroidNode(Node):
     def __init__(self, args):
@@ -38,6 +42,7 @@ class DroidNode(Node):
         self.cam_transform = np.diag([1, -1, -1, 1])
         # Initialize ROS2 Publisher and Subscriber
         self.publisher = self.create_publisher(ImagePose, '/camera/color/imagepose',10)
+        self.pointcloud_publisher_ = self.create_publisher(PointCloud2, '/camera/pointcloud', 10)
         self.realsense_publisher = self.create_publisher(ImagePose, '/sim_realsense',20)
         # self.realsense_subscriber = self.create_subscription(
         #     ImagePose,
@@ -46,11 +51,12 @@ class DroidNode(Node):
         #     10)
         self.rgb_sub = message_filters.Subscriber(self,
             CompressedImage,
-            '/camera/color/image_raw/compressed')
-        self.intr_sub = self.create_subscription(CameraInfo,'/camera/color/camera_info',self.cam_intr_cb,1)
+            '/imageo_compressedo'#/camera/color/image_raw/compressed', #'/imageo_compressedo',
+            )
+        self.intr_sub = self.create_subscription(CameraInfo,'/ros2_camera/color/camera_info',self.cam_intr_cb,1)
         self.sim_realsense_sub = self.create_subscription(ImagePose,'/sim_realsense',self.sim_realsense_callback,10)
-        self.depth_sub = message_filters.Subscriber(self,ROSImage,'/camera/depth/image_rect_raw')
-
+        self.depth_sub = message_filters.Subscriber(self,ROSImage,'/ros2_camera/depth/image_rect_raw')
+        self.tf_broadcaster = TransformBroadcaster(self)
         self.ts = message_filters.ApproximateTimeSynchronizer([self.rgb_sub, self.depth_sub], 20, 0.1)
         self.ts.registerCallback(self.image_callback)
 
@@ -64,6 +70,8 @@ class DroidNode(Node):
 
         }
         self.bridge = CvBridge()
+        self.last_pose = None
+        self.last_disp = None
 
     def cam_intr_cb(self,msg):
         if 'w' in self.cam_params:
@@ -99,8 +107,10 @@ class DroidNode(Node):
 
     def sim_realsense_callback(self,msg):
         print("sim realsense callback",self.image_counter)
-        cv_image = self.bridge.imgmsg_to_cv2(msg.img, desired_encoding='bgr8')  # Convert ROS Image message to OpenCV image
-        depth_image = self.bridge.imgmsg_to_cv2(msg.depth,desired_encoding='16UC1')
+        cv_image_original = self.bridge.imgmsg_to_cv2(msg.img, desired_encoding='bgr8')  # Convert ROS Image message to OpenCV image
+        cv_image = cv2.resize(cv_image_original, (848, 480))
+        depth_image_original = self.bridge.imgmsg_to_cv2(msg.depth,desired_encoding='16UC1')
+        depth_image = cv2.resize(depth_image_original, (848, 480))
         if 'cx' not in self.cam_params:
             print("Not recieved intr yet, skipping frame")
             return
@@ -127,16 +137,74 @@ class DroidNode(Node):
         self.droid.track(t, image_tensor[None, :, :, :],depth, intrinsics=intrinsics)
         #visualize the image with cv2
         if(self.droid.video.counter.value == self.image_counter):
+            if(self.last_pose is not None):
+                t = TransformStamped()
+                t.header.stamp = self.get_clock().now().to_msg()
+                t.header.frame_id = "map"
+                t.child_frame_id = "base_footprint"
+                
+                last_pose_arr = [self.last_pose.position.x,self.last_pose.position.y,self.last_pose.position.z,self.last_pose.orientation.x,self.last_pose.orientation.y,self.last_pose.orientation.z,self.last_pose.orientation.w]
+                xyz = last_pose_arr[:3]
+                quat = last_pose_arr[3:]
+                matrix = np.eye(4)
+                rotation = R.from_quat(quat)
+                matrix[:3, :3] = rotation.as_matrix()
+                matrix[:3, 3] = xyz
+                droid_slam_alt_tf = np.array([[0,0,1,0],[-1,0,0,0],[0,-1,0,0],[0,0,0,1]])
+                map_to_ros_cam = droid_slam_alt_tf @ matrix
+                ros_cam_to_base = np.array([[0,-1,0,0],[0,0,1,0],[-1,0,0,0],[0,0,0,1]])
+                map_to_base = map_to_ros_cam @ ros_cam_to_base
+                alt_position = map_to_base[:3,3]
+                alt_rotation_matrix = map_to_base[:3,:3]
+                alt_quaternion = R.from_matrix(alt_rotation_matrix).as_quat()
+                t.transform.translation.x = alt_position[0]
+                t.transform.translation.y = alt_position[1]
+                t.transform.translation.z = alt_position[2]
+
+                t.transform.rotation.x = alt_quaternion[0]
+                t.transform.rotation.y = alt_quaternion[1]
+                t.transform.rotation.z = alt_quaternion[2]
+                t.transform.rotation.w = alt_quaternion[3]
+
+                self.tf_broadcaster.sendTransform(t)
+                print("Sent transform",flush=True)
+                # Make it so dirty_index is a tensor but it just includes the last one
+                # Then you should get a [1,60,106,3] pointcloud which is just [60,106] pointcloud
+                dirty_index = torch.where(self.droid.video.dirty.clone())[0]
+                if(len(dirty_index) > 0):
+                    dirty_index = dirty_index[-1]
+                    poses = torch.index_select(self.droid.video.poses,0,dirty_index)
+                    disps = torch.index_select(self.droid.video.disps,0,dirty_index)
+                    points = droid_backends.iproj(SE3(poses).inv().data, disps, self.droid.video.intrinsics[0]).cpu()
+                    points = points.reshape(-1,3).numpy()
+                    pointcloud_msg = PointCloud2()
+                    pointcloud_msg.header.stamp = self.get_clock().now().to_msg()
+                    pointcloud_msg.header.frame_id = "ros2_pointcloud"
+                    pointcloud_msg.height = 1
+                    pointcloud_msg.width = len(points)
+                    pointcloud_msg.fields = [
+                        PointField(name='x',offset=0,datatype=PointField.FLOAT32,count=1),
+                        PointField(name='y',offset=4,datatype=PointField.FLOAT32,count=1),
+                        PointField(name='z',offset=8,datatype=PointField.FLOAT32,count=1)
+                    ]
+                    pointcloud_msg.is_bigendian = False
+                    pointcloud_msg.point_step = 12
+                    pointcloud_msg.row_step = 12 * len(points)
+                    pointcloud_msg.is_dense = False
+                    pointcloud_msg.data = points.astype(np.float32).tobytes()
+                    self.pointcloud_publisher_.publish(pointcloud_msg)
+                    
             return
         #imshow the cv_image
         cv2.imshow("Image window", cv_image)
         cv2.waitKey(3)
         self.image_counter += 1
         pose = self.droid.video.poses[self.droid.video.counter.value-1].cpu().numpy()
+        
         print("Adding droid keyframe...")
         image_pose_msg = ImagePose()
-        image_pose_msg.img = self.bridge.cv2_to_imgmsg(cv_image, encoding="bgr8")
-        image_pose_msg.depth = self.bridge.cv2_to_imgmsg(depth_image,encoding="16UC1")
+        image_pose_msg.img = self.bridge.cv2_to_imgmsg(cv_image_original, encoding="bgr8")
+        image_pose_msg.depth = self.bridge.cv2_to_imgmsg(depth_image_original,encoding="16UC1")
         image_pose_msg.w = self.cam_params['w']
         image_pose_msg.h = self.cam_params['h']
         image_pose_msg.fl_x = self.cam_params['fl_x']
@@ -151,7 +219,9 @@ class DroidNode(Node):
         print("xyz pose droidslam: ", pose)
         orient = R.from_matrix(posemat[:3,:3]).as_quat()
         image_pose_msg.pose = Pose(position=Point(x=pose[0],y=pose[1],z=pose[2]),orientation=Quaternion(x=orient[0],y=orient[1],z=orient[2],w=orient[3]))  # Replace with your Pose message
-        
+        self.last_pose = image_pose_msg.pose
+        self.last_disp = self.droid.video.disps[self.droid.video.counter.value-1].cpu().numpy()
+
         self.publisher.publish(image_pose_msg)
         filename = f"{self.output_folder_}/image{self.image_counter:06d}.jpg"
         Image.fromarray(image_tensor.squeeze().cpu().permute(1,2,0).numpy()[:,:,::-1].astype(np.uint8)).save(filename)

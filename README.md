@@ -228,3 +228,4 @@ rosrun nuc_bridge string_to_twist.py
 Now, you should put a goal down in RVIZ, and it should navigate to the goal!!! You can verify that you reached the goal when the /navigate_to_pose/_action/status has a status 4 as opposed to staus 2. Status 6 means that the goal was aborted
 
 
+sudo apt-get install ros-humble-octomap-mapping

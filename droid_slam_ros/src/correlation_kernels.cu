@@ -18,7 +18,7 @@ __forceinline__ __device__ bool within_bounds(int h, int w, int H, int W) {
 
 template <typename scalar_t>
 __global__ void corr_index_forward_kernel(
-    const torch::PackedTensorAccessor32<scalar_t,5,torch::RestrictPtrTraits> volume,
+    const torch::PackedTensorAccessor64<scalar_t,5,torch::RestrictPtrTraits> volume,
     const torch::PackedTensorAccessor32<float,4,torch::RestrictPtrTraits> coords,
     torch::PackedTensorAccessor32<scalar_t,5,torch::RestrictPtrTraits> corr,
     int r)
@@ -144,7 +144,7 @@ std::vector<torch::Tensor> corr_index_cuda_forward(
 
   AT_DISPATCH_FLOATING_TYPES_AND_HALF(volume.type(), "sampler_forward_kernel", ([&] {
     corr_index_forward_kernel<scalar_t><<<blocks, threads>>>(
-      volume.packed_accessor32<scalar_t,5,torch::RestrictPtrTraits>(),
+      volume.packed_accessor64<scalar_t,5,torch::RestrictPtrTraits>(),
       coords.packed_accessor32<float,4,torch::RestrictPtrTraits>(),
       corr.packed_accessor32<scalar_t,5,torch::RestrictPtrTraits>(),
       radius);
