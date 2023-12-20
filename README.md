@@ -231,3 +231,6 @@ Now, you should put a goal down in RVIZ, and it should navigate to the goal!!! Y
 
 
 sudo apt-get install ros-humble-octomap-mapping
+
+ros2 run tf2_ros static_transform_publisher 0 0 0 0.5 -0.5 -0.5 0.5 base_footprint ros2_camera_link
+ros2 run tf2_ros static_transform_publisher 0 0 0 0.5 -0.5 0.5 -0.5 ros2_camera_link ros2_pointcloud
