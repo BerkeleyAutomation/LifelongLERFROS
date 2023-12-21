@@ -88,7 +88,9 @@ gst-launch-1.0 udpsrc port=5001 ! \
     videoconvert ! autovideosink
 ```
 
-## Setting Up 4 Arducams:
+## Setting Up Arducams:
+
+For 4 Arducam Setup: 
 There is a specific order that all of the cameras need to be plugged into. The back camera needs to be plugged into Justin's usb-c dongle at in the closest port to the usb-c connector. The dongle is then plugged into the usb-c port labeled 2 (one closer to the center of the robot). Front camera plugs into the bottom usb-a connector on the leftside of the nuc (left from robot frame). Left camera plugs into the port right above the left camera and the right camera plugs into the only free port on the right. 
 
 Connect to the robot and remap the ports.  
@@ -99,7 +101,7 @@ cd ~/ros2_ws
 colcon_build
 . install/setup.bash
 cd src/camera_bringup/scripts
-sudo bash remap_cameras.bash
+sudo bash remap_cameras_4_arducam.bash
 ```
 After that, while still in the fetch run the launch script
 ```
@@ -125,8 +127,10 @@ ros2 run camera_bringup 4_arducam_compressed_converter.py
 
 You should now see all four cameras publishing on `/repub/cam<direction>/image_raw`.
 
-You can see their videos by running `view_4_cam.py` located in `camera_bring/scripts/` (for some reason ros doens't like working with this)
+For 3 Arducam Setup:
+This is when we're using the realsense as our front camera. In this case have the realsense plugged into the right farthest most usb port with the right cam connected to the port behind it. Have the left camera plugged into the closest usb port of Justin's splitter and have that plugged into usb-c port 2. Have the back camera plugged into the top usb port on the left side. Repeat the same commands as above but run `remap_cameras_3_arducam.bash` and `3_camera_launch.py` instead. 
 
+You can see their videos by running `view_4_cam.py` located in `camera_bring/scripts/` (for some reason ros doesn't like working with this)
 
 
 ## Run Navigation 11/18 (Still under development)
