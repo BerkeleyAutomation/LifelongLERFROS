@@ -9,16 +9,13 @@ import cv2
 class ImageSubscriber(Node):
     def __init__(self):
         super().__init__('image_subscriber')
-        self.topics = ['/repub/camFront/image_raw', '/repub/camBack/image_raw', '/repub/camLeft/image_raw', '/repub/camRight/image_raw']
+        self.topics = ['/repub/camFront/image_raw', '/repub/camBack/image_raw', '/repub/camLeft/image_raw', '/repub/camRight/image_raw', '/repub_image_raw']
         self.window_names = ['Front Camera', 'Back Camera', 'Left Camera', 'Right Camera']
         self.bridge = CvBridge()
         self.subs = {}
         self.windows = {}
         for topic_name in self.topics:
             sub = self.create_subscription(Image, topic_name, self.image_callback, 10)
-            window_name = topic_name.split('/')[-2]
-            cv_window = cv2.namedWindow(topic_name, cv2.WINDOW_NORMAL)
-            self.subs[window_name] = sub
 
     def image_callback(self, msg):
         cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
