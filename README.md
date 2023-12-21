@@ -145,7 +145,7 @@ colcon build
 . install/setup.bash
 ros2 launch realsense2_camera rs_launch.py
 ```
-
+Note: to specify the resolution of the color/depth of the camera you can run `ros2 launch realsense2_camera rs_launch.py depth_module.profile:=848x480x30 rgb_camera.profile:=848x480x30` 
 To verify this works, in another window, ssh into the fetch, source ros2_foxy, and check the frequency of /ros2_camera/color/image_raw. It should be at about 15 Hz.
 
 Next, run the image compression node on the Fetch. We need this because directly subscribing to the full image on the computer causes too much lag, so we subscribe to the compressed image on the computer.
