@@ -124,6 +124,7 @@ class DroidNode(Node):
             depth=None
         else:
             depth=depth_tensor[:,:]
+        depth=None
         self.droid.track(t, image_tensor[None, :, :, :],depth, intrinsics=intrinsics)
         #visualize the image with cv2
         if(self.droid.video.counter.value == self.image_counter):
