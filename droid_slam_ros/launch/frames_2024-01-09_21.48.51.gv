@@ -1,0 +1,11 @@
+digraph G {
+"ros2_camera_link" -> "ros2_camera_depth_frame"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"ros2_camera_depth_frame" -> "ros2_camera_depth_optical_frame"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"ros2_camera_link" -> "ros2_camera_color_frame"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"ros2_camera_color_frame" -> "ros2_camera_color_optical_frame"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"map" -> "base_footprint"[label=" Broadcaster: default_authority\nAverage rate: 2.102\nBuffer length: 3.33\nMost recent transform: 1704842567.38918\nOldest transform: 1704842564.059335\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1704865731.1744053"[ shape=plaintext ] ;
+}->"map";
+}

@@ -29,10 +29,18 @@ from torch.multiprocessing import Process
 from droid import Droid
 import message_filters
 from tf2_ros import TransformBroadcaster
-
+import open3d as o3d
+import open3d.visualization as vis
 import torch.nn.functional as F
 import droid_backends
 from lietorch import SE3
+
+def create_point_actor(points, colors):
+    """ open3d point cloud from numpy array """
+    point_cloud = o3d.geometry.PointCloud()
+    point_cloud.points = o3d.utility.Vector3dVector(points)
+    point_cloud.colors = o3d.utility.Vector3dVector(colors)
+    return point_cloud
 
 class DroidNode(Node):
     def __init__(self, args):
@@ -55,9 +63,12 @@ class DroidNode(Node):
             )
         self.intr_sub = self.create_subscription(CameraInfo,'/ros2_camera/color/camera_info',self.cam_intr_cb,1)
         self.sim_realsense_sub = self.create_subscription(ImagePose,'/sim_realsense',self.sim_realsense_callback,10)
-        self.depth_sub = message_filters.Subscriber(self,ROSImage,'/ros2_camera/depth/image_rect_raw')
+        #self.depth_sub = message_filters.Subscriber(self,ROSImage,'/ros2_camera/depth/image_rect_raw')
+        #COMPRESSED DEPTH CHANGE
+        self.depth_sub = message_filters.Subscriber(self,ROSImage,'repub_depth_raw')
+        
         self.tf_broadcaster = TransformBroadcaster(self)
-        self.ts = message_filters.ApproximateTimeSynchronizer([self.rgb_sub, self.depth_sub], 20, 0.1)
+        self.ts = message_filters.ApproximateTimeSynchronizer([self.rgb_sub, self.depth_sub], 20, 0.5)
         self.ts.registerCallback(self.image_callback)
 
         self.image_counter = 0
@@ -140,7 +151,7 @@ class DroidNode(Node):
             if(self.last_pose is not None):
                 t = TransformStamped()
                 t.header.stamp = self.get_clock().now().to_msg()
-                t.header.frame_id = "map"
+                t.header.frame_id = "odom"
                 t.child_frame_id = "base_footprint"
                 
                 last_pose_arr = [self.last_pose.position.x,self.last_pose.position.y,self.last_pose.position.z,self.last_pose.orientation.x,self.last_pose.orientation.y,self.last_pose.orientation.z,self.last_pose.orientation.w]
@@ -150,10 +161,13 @@ class DroidNode(Node):
                 rotation = R.from_quat(quat)
                 matrix[:3, :3] = rotation.as_matrix()
                 matrix[:3, 3] = xyz
+                #tilt_tf = np.array([[0,-1,0,0],[0.410,0.004,0.912,0],[-0.912,-0.009,0.411,0],[0,0,0,1]])
+                tilt_tf = np.array([[0.912,0.009,-0.411,0],[-0.01,1,0,0],[0.41,0.004,0.912,0],[0,0,0,1]])
+                tilt_tf_inv = np.linalg.inv(tilt_tf)
                 droid_slam_alt_tf = np.array([[0,0,1,0],[-1,0,0,0],[0,-1,0,0],[0,0,0,1]])
-                map_to_ros_cam = droid_slam_alt_tf @ matrix
+                map_to_ros_cam = tilt_tf_inv @ droid_slam_alt_tf @ matrix
                 ros_cam_to_base = np.array([[0,-1,0,0],[0,0,1,0],[-1,0,0,0],[0,0,0,1]])
-                map_to_base = map_to_ros_cam @ ros_cam_to_base
+                map_to_base =   map_to_ros_cam @ ros_cam_to_base
                 alt_position = map_to_base[:3,3]
                 alt_rotation_matrix = map_to_base[:3,:3]
                 alt_quaternion = R.from_matrix(alt_rotation_matrix).as_quat()
@@ -165,23 +179,49 @@ class DroidNode(Node):
                 t.transform.rotation.y = alt_quaternion[1]
                 t.transform.rotation.z = alt_quaternion[2]
                 t.transform.rotation.w = alt_quaternion[3]
-
                 self.tf_broadcaster.sendTransform(t)
                 print("Sent transform",flush=True)
                 # Make it so dirty_index is a tensor but it just includes the last one
                 # Then you should get a [1,60,106,3] pointcloud which is just [60,106] pointcloud
                 dirty_index = torch.where(self.droid.video.dirty.clone())[0]
                 if(len(dirty_index) > 0):
-                    dirty_index = dirty_index[-1]
-                    poses = torch.index_select(self.droid.video.poses,0,dirty_index)
-                    disps = torch.index_select(self.droid.video.disps,0,dirty_index)
+                    self.droid.video.dirty[dirty_index] = False
+                    print("Dirty index")
+                    print(dirty_index, dirty_index.shape)
+                    # convert poses to 4x4 matrix
+                    poses = torch.index_select(self.droid.video.poses, 0, dirty_index)
+                    disps = torch.index_select(self.droid.video.disps, 0, dirty_index)
+                    Ps = SE3(poses).inv().matrix().cpu().numpy()
+
+                    images = torch.index_select(self.droid.video.images, 0, dirty_index)
+                    images = images.cpu()[:,[2,1,0],3::8,3::8].permute(0,2,3,1) / 255.0
                     points = droid_backends.iproj(SE3(poses).inv().data, disps, self.droid.video.intrinsics[0]).cpu()
-                    points = points.reshape(-1,3).numpy()
+                    print('points:', points.shape)
+                    filter_thresh = 0.005
+                    thresh = filter_thresh * torch.ones_like(disps.mean(dim=[1,2]))
+                    
+                    count = droid_backends.depth_filter(self.droid.video.poses, self.droid.video.disps, self.droid.video.intrinsics[0], dirty_index, thresh)
+
+                    count = count.cpu()
+                    disps = disps.cpu()
+                    masks = ((count >= 2) & (disps > .5*disps.mean(dim=[1,2], keepdim=True)))
+                    
+                    print('masks:', masks.shape)
+                    masked_points = torch.empty((0, 3))
+                    #for i in range(len(dirty_index)):   
+                    i = len(dirty_index) - 1
+                    ix = dirty_index[i].item()                 
+                    mask = masks[i].reshape(-1)
+                    pts = points[i].reshape(-1, 3)[mask]
+                    print('pts:', pts.shape)
+                    # clr = images[i].reshape(-1, 3)[mask]
+                    # point_actor = create_point_actor(pts, clr)
+                    # points[ix] = pts
                     pointcloud_msg = PointCloud2()
                     pointcloud_msg.header.stamp = self.get_clock().now().to_msg()
                     pointcloud_msg.header.frame_id = "ros2_pointcloud"
                     pointcloud_msg.height = 1
-                    pointcloud_msg.width = len(points)
+                    pointcloud_msg.width = len(pts)
                     pointcloud_msg.fields = [
                         PointField(name='x',offset=0,datatype=PointField.FLOAT32,count=1),
                         PointField(name='y',offset=4,datatype=PointField.FLOAT32,count=1),
@@ -189,10 +229,46 @@ class DroidNode(Node):
                     ]
                     pointcloud_msg.is_bigendian = False
                     pointcloud_msg.point_step = 12
-                    pointcloud_msg.row_step = 12 * len(points)
+                    pointcloud_msg.row_step = 12 * len(pts)
                     pointcloud_msg.is_dense = False
-                    pointcloud_msg.data = points.astype(np.float32).tobytes()
+                    pointcloud_msg.data = pts.cpu().numpy().astype(np.float32).tobytes()
                     self.pointcloud_publisher_.publish(pointcloud_msg)
+                        
+                        # masked_points = torch.concat((masked_points, pts))
+
+
+                    masked_points = masked_points.cpu().numpy()
+                    print('masked points:', masked_points.shape)
+
+                    
+
+                    ########
+
+                    # dirty_index = dirty_index[-1]
+                    # poses = torch.index_select(self.droid.video.poses,0,dirty_index)
+                    # disps = torch.index_select(self.droid.video.disps,0,dirty_index)
+                    # points = droid_backends.iproj(SE3(poses).inv().data, disps, self.droid.video.intrinsics[0]).cpu()
+                    # points = points.reshape(-1,3).numpy()
+                    # pointcloud_o3d = o3d.geometry.PointCloud()
+                    # pointcloud_o3d.points = o3d.utility.Vector3dVector(points)
+                    # o3d.io.write_point_cloud("output_pointcloud.ply",pointcloud_o3d)
+                    # pointcloud_msg = PointCloud2()
+                    # pointcloud_msg.header.stamp = self.get_clock().now().to_msg()
+                    # pointcloud_msg.header.frame_id = "ros2_pointcloud"
+                    # pointcloud_msg.height = 1
+                    # pointcloud_msg.width = len(points)
+                    # pointcloud_msg.fields = [
+                    #     PointField(name='x',offset=0,datatype=PointField.FLOAT32,count=1),
+                    #     PointField(name='y',offset=4,datatype=PointField.FLOAT32,count=1),
+                    #     PointField(name='z',offset=8,datatype=PointField.FLOAT32,count=1)
+                    # ]
+                    # pointcloud_msg.is_bigendian = False
+                    # pointcloud_msg.point_step = 12
+                    # pointcloud_msg.row_step = 12 * len(points)
+                    # pointcloud_msg.is_dense = False
+                    # print('points:', points.shape)
+                    # pointcloud_msg.data = points.astype(np.float32).tobytes()
+                    # self.pointcloud_publisher_.publish(pointcloud_msg)
                     
             return
         #imshow the cv_image

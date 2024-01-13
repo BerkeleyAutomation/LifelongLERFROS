@@ -77,7 +77,6 @@ def update_visualization(server: viser.ViserServer, video, dirty_index: torch.Te
             wxyz=vtf.SO3.from_matrix(pose[:3,:3]).wxyz
         )
         droid_visualization.cameras[ix] = camera_ix
-
         mask = masks[i].reshape(-1)
         pts = points[i].reshape(-1, 3)[mask].cpu().numpy()
         clr = images[i].reshape(-1, 3)[mask].cpu().numpy()
