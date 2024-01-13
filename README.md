@@ -103,6 +103,7 @@ mamba install ros-humble-desktop-full
 
 
 Pip install the rest of the stuff
+pip install lietorch
 
 pip install torch-scatter==2.1.1
 
