@@ -16,6 +16,7 @@ $ git clone https://github.com/iKrishneel/octomap_server2.git
 Clone the dependency repositories to the workspace
 ```bash
 # will clone octomap_msgs to the workspace
+$ sudo apt-get install python3-vcstool 
 $ vcs import . < deps.repos
 ```
 
