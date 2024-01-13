@@ -21,7 +21,7 @@ from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 
 
-configurable_parameters = [{'name': 'camera_name',                  'default': 'camera', 'description': 'camera unique name'},
+configurable_parameters = [{'name': 'camera_name',                  'default': 'ros2_camera', 'description': 'camera unique name'},
                            {'name': 'serial_no',                    'default': "''", 'description': 'choose device by serial number'},
                            {'name': 'usb_port_id',                  'default': "''", 'description': 'choose device by usb port id'},
                            {'name': 'device_type',                  'default': "''", 'description': 'choose device by type'},
@@ -30,7 +30,7 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'json_file_path',               'default': "''", 'description': 'allows advanced configuration'},
                            {'name': 'log_level',                    'default': 'info', 'description': 'debug log level [DEBUG|INFO|WARN|ERROR|FATAL]'},
                            {'name': 'output',                       'default': 'screen', 'description': 'pipe node output [screen|log]'},
-                           {'name': 'depth_module.profile',         'default': '848,480,15', 'description': 'depth module profile'},                           
+                           {'name': 'depth_module.profile',         'default': '424,240,15', 'description': 'depth module profile'},                           
                            {'name': 'enable_depth',                 'default': 'true', 'description': 'enable depth stream'},
                            {'name': 'rgb_camera.profile',           'default': '848,480,15', 'description': 'color image width'},
                            {'name': 'rgb_camera.enable_auto_exposure', 'default': 'false', 'description': 'enable/disable auto exposure for color image'},
@@ -44,7 +44,11 @@ configurable_parameters = [{'name': 'camera_name',                  'default': '
                            {'name': 'enable_confidence',            'default': 'true', 'description': 'enable depth stream'},
                            {'name': 'gyro_fps',                     'default': '0', 'description': "''"},                           
                            {'name': 'accel_fps',                    'default': '0', 'description': "''"},                           
-                           {'name': 'enable_gyro',                  'default': 'true', 'description': "''"},                           
+                           {'name': 'enable_gyro',                  'default': 'true', 'description': "''"}, 
+                           #{'name': '.color.image_raw.format', 'default': 'png', 'description': "''"},   
+                           #{'name': '.color.image_raw.png_level', 'default': '5', 'description': "''"},    
+                           #{'name': '.depth.image_rect_raw.format', 'default': 'png', 'description': "''"},
+                           #{'name': '.depth.image_rect_raw.png_level', 'default': '5', 'description': "''"},                   
                            {'name': 'enable_accel',                 'default': 'true', 'description': "''"},                           
                            {'name': 'enable_pose',                  'default': 'false', 'description': "''"},                           
                            {'name': 'pose_fps',                     'default': '200', 'description': "''"},                           
