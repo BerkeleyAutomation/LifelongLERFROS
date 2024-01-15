@@ -205,6 +205,11 @@ This is when we're using the realsense as our front camera. In this case have th
 You can see their videos by running `view_4_cam.py` located in `camera_bring/scripts/` (for some reason ros doesn't like working with this)
 
 
+## Rtabmap Installation
+```
+sudo apt-get install ros-humble-rtabmap-ros
+```
+
 ## Run Navigation 11/18 (Still under development)
 
 Okay, so we got a lot of moving pieces to get this working. We will consolidate soon.
