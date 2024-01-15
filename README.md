@@ -137,6 +137,14 @@ sudo systemctl restart roscore.service
 sudo systemctl restart robot.service
 ```
 Then press the center playstation button on the joystick and if you see a lone solid red light then you're connected.
+Note: if this doesn't work then just `sudo reboot` the fetch and it should work first try.
+
+## Teleop with Keyboard
+Teleop'ing with keyboard results in far smoother movements of the fetch than using the joystick so it is recommended you move the robot with this when possible. ssh into the fetch, `sr1` and run
+```
+rosrun teleop_twist_keyboard teleop_twist_keyboard.py
+```
+and you should be all set!
 
 ## Setting Up Gstreamer
 We need to Gstream the main arducam for high FPS to do DROID-SLAM. The other 3 cameras can run slower and only be used for the LEGS. 
