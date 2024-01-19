@@ -110,6 +110,7 @@ pip install matplotlib==3.7.2
 
 pip install matplotlib-inline==0.1.6
 
+pip install lietorch==0.6.2
 
 ## Run Droid-SLAM
 ON TURTLEBOT (Needs camera images as input)
