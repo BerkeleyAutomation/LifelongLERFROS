@@ -316,3 +316,22 @@ sudo apt-get install ros-humble-octomap-mapping
 
 ros2 run tf2_ros static_transform_publisher 0 0 0 0.5 -0.5 -0.5 0.5 base_footprint ros2_camera_link
 ros2 run tf2_ros static_transform_publisher 0 0 0 0.5 -0.5 0.5 -0.5 ros2_camera_link ros2_pointcloud
+
+
+## RTABMap + DROID-SLAM (1/22)
+`ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 map odom`
+`ros2 run tf2_ros static_transform_publisher 0 0 1.1557 -1.57 0 -1.57 odom map_droid`
+`ros2 run tf2_ros static_transfoheransform_publisher 0 0 0 -1.57 0 -1.57 map map_droid`
+=== on desktop ===
+in each new terminal: conda deactivate; cd ~/ros2_ws (on duchamp1 this is called legs_ws); . install/setup.bash
+
+then:
+mamba activate droid_slam_ros_env
+cd droid_slam_ros
+python setup.py install
+ros2 run droid_slam_ros droid_slam_node.py
+
+in another terminal:
+mamba activate droid_slam_ros_env
+ros2 run image_transport_tutorials depth_decode_node 
+
