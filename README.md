@@ -201,7 +201,33 @@ ros2 run camera_bringup 4_arducam_compressed_converter.py
 You should now see all four cameras publishing on `/repub/cam<direction>/image_raw`.
 
 For 3 Arducam Setup:
-This is when we're using the realsense as our front camera. In this case have the realsense plugged into the right farthest most usb port with the right cam connected to the port behind it. Have the left camera plugged into the closest usb port of Justin's splitter and have that plugged into usb-c port 2. Have the back camera plugged into the top usb port on the left side. Repeat the same commands as above but run `remap_cameras_3_arducam.bash` and `3_camera_launch.py` instead. 
+This is when we're using the realsense as our front camera. In this case have the realsense plugged into the left top usb port with the left camera plugged right below. Have the back camera plugged into the close end of the usb-c splitter and the right camera plugged into the other spot. Have the splitter plugged into usb-c port 2.
+
+Connect to the robot and remap the ports.  
+```
+ssh fetch@fetch59.local # password robotics
+sr2
+cd ~/ros2_ws
+colcon_build
+. install/setup.bash
+cd src/camera_bringup/scripts
+sudo bash remap_cameras_3_arducam.bash
+```
+After that, while still in the fetch run the launch script
+```
+cd ~/ros2_ws
+colcon_build
+. install/setup.bash
+source /opt/ros/foxy/setup.bash
+ros2 launch camera_bringup 3_camera_launch.py
+```
+On the computer then go into the lifelong_lerf_ws and run the script to uncompress the images
+```
+cd ~/lifelong_lerf_ws
+colcon build
+. install/setup.bash
+ros2 run camera_bringup 3_arducam_compressed_converter.py
+```
 
 You can see their videos by running `view_4_cam.py` located in `camera_bring/scripts/` (for some reason ros doesn't like working with this)
 
