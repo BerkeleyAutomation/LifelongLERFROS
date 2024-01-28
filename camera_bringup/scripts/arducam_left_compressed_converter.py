@@ -10,9 +10,9 @@ import time
 
 class ImageRepublisherNode(Node):
     def __init__(self):
-        super().__init__('image_republisher')
-        self.color_sub = self.create_subscription(CompressedImage, '/ros2_camera/color/image_raw/compressed', self.color_callback, 1)
-        self.color_pub = self.create_publisher(Image, '/repub_image_raw', 1)
+        super().__init__('left_arducam_publisher')
+        self.color_sub = self.create_subscription(CompressedImage, '/camLeft/image_raw/compressed', self.color_callback, 1)
+        self.color_pub = self.create_publisher(Image, '/repub/camLeft/image_raw', 1)
         self.cv_bridge = CvBridge()
 
     def color_callback(self, msg):

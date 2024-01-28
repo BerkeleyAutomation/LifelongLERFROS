@@ -13,10 +13,11 @@ class NerfCollection(Node):
         super().__init__('nerf_collection')
         self.subscription = self.create_subscription(
             CompressedImage,
-            '/camera/color/image_raw/compressed',  # Replace with your image topic name
+            '/camLeft/image_raw/compressed',  # Replace with your image topic name
             self.image_callback,
             10)
         self.bridge = CvBridge()
+        self.image_count = 0
 
     def image_callback(self, msg):
         try:
@@ -31,9 +32,10 @@ class NerfCollection(Node):
             os.makedirs(output_folder)
 
         # Save the image to the output folder
-        image_filename = os.path.join(output_folder, f'image_{msg.header.stamp}.jpg')
+        image_filename = os.path.join(output_folder, f'image_{self.image_count:04d}.jpg')
         cv2.imwrite(image_filename, cv_image)
         self.get_logger().info(f'Saved image to {image_filename}')
+        self.image_count += 1
 
 def main(args=None):
     rclpy.init(args=args)

@@ -10,8 +10,8 @@ import numpy as np
 class ImageVisualization(Node):
     def __init__(self):
         super().__init__('image_visualization')
-        self.depth_subscriber_ = self.create_subscription(Image, '/camera/depth/image_rect_raw', self.image_callback, 10)
-        self.color_subscriber_ = self.create_subscription(CompressedImage, '/camera/color/image_raw/compressed', self.compressed_image_callback, 10)
+        # self.depth_subscriber_ = self.create_subscription(Image, '/camera/depth/image_rect_raw', self.image_callback, 10)
+        self.color_subscriber_ = self.create_subscription(Image, '/repub_image_raw', self.image_callback, 10)
         #self.subscription = self.create_subscription(CompressedImage,'/camera/color/image_raw/compressed',self.compressed_image_callback,10)
         self.bridge = CvBridge()
 
