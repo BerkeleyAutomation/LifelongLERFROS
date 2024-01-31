@@ -1,6 +1,6 @@
 
 geometry_msgs/Pose pose
-sensor_msgs/Image img
+sensor_msgs/CompressedImage img
 sensor_msgs/Image depth
 uint32 w                
 uint32 h

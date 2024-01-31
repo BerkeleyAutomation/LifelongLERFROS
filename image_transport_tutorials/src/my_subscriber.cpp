@@ -38,7 +38,8 @@ int main(int argc, char ** argv)
   cv::namedWindow("view");
   cv::startWindowThread();
   image_transport::ImageTransport it(node);
-  image_transport::Subscriber sub = it.subscribe("/ros2_camera/depth/image_rect_raw/compressedDepth", 1, imageCallback);
+  // image_transport::Subscriber sub = it.subscribe("/ros2_camera/depth/image_rect_raw/compressedDepth", 1, imageCallback);
+  image_transport::Subscriber sub = it.subscribe("/camera/image_raw", 1, imageCallback);
   rclcpp::spin(node);
   cv::destroyWindow("view");
 

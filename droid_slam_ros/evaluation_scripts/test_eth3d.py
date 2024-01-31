@@ -10,7 +10,7 @@ import os
 import glob 
 import time
 import argparse
-
+import time
 import torch.nn.functional as F
 from droid import Droid
 
@@ -30,13 +30,22 @@ def image_stream(datapath, use_depth=False, stride=1):
     depth_list = sorted(glob.glob(os.path.join(datapath, 'depth', '*.png')))[::stride]
 
     for t, (image_file, depth_file) in enumerate(zip(image_list, depth_list)):
+        
         image = cv2.imread(image_file)
+        # image = image[61:404, 102:661,:]
+        print("new img size is", image.shape)
         depth = cv2.imread(depth_file, cv2.IMREAD_ANYDEPTH) / 5000.0
-
+        # image = cv2.resize(image,(424,240))
+        
         h0, w0, _ = image.shape
         h1 = int(h0 * np.sqrt((384 * 512) / (h0 * w0)))
         w1 = int(w0 * np.sqrt((384 * 512) / (h0 * w0)))
-
+        h1 = int(h0 * ((384) / (h0)))
+        w1 = int(w0 * (( 512) / (w0)))
+        h1 = h0
+        w1 = w0
+        print("h1:", h1)
+        print("w1:", w1)
         image = cv2.resize(image, (w1, h1))
         image = image[:h1-h1%8, :w1-w1%8]
         image = torch.as_tensor(image).permute(2, 0, 1)
@@ -48,7 +57,6 @@ def image_stream(datapath, use_depth=False, stride=1):
         intrinsics = torch.as_tensor([fx, fy, cx, cy])
         intrinsics[0::2] *= (w1 / w0)
         intrinsics[1::2] *= (h1 / h0)
-
         if use_depth:
             yield t, image[None], depth, intrinsics
 
@@ -59,10 +67,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--datapath")
     parser.add_argument("--weights", default="droid.pth")
-    parser.add_argument("--buffer", type=int, default=1024)
+    parser.add_argument("--buffer", type=int, default=512)
     parser.add_argument("--image_size", default=[240, 320])
     parser.add_argument("--disable_vis", action="store_true")
-
+    parser.add_argument("--upsample", action="store_true")
     parser.add_argument("--beta", type=float, default=0.5)
     parser.add_argument("--filter_thresh", type=float, default=2.0)
     parser.add_argument("--warmup", type=int, default=8)
@@ -79,33 +87,39 @@ if __name__ == '__main__':
     parser.add_argument("--backend_radius", type=int, default=2)
     parser.add_argument("--backend_nms", type=int, default=3)
     args = parser.parse_args()
-
     torch.multiprocessing.set_start_method('spawn')
 
     print("Running evaluation on {}".format(args.datapath))
     print(args)
+    import pdb
+    pdb.set_trace()
 
     # this can usually be set to 2-3 except for "camera_shake" scenes
     # set to 2 for test scenes
     stride = 1
 
     tstamps = []
+    iter_times = []
     for (t, image, depth, intrinsics) in tqdm(image_stream(args.datapath, use_depth=True, stride=stride)):
+        start_time = time.time()
         if not args.disable_vis:
             show_image(image[0])
 
         if t == 0:
             args.image_size = [image.shape[2], image.shape[3]]
+            print("the image size is", args.image_size)
             droid = Droid(args)
         
         droid.track(t, image, depth, intrinsics=intrinsics)
+        end_time = time.time()
+        iter_times.append(end_time - start_time)
     
     traj_est = droid.terminate(image_stream(args.datapath, use_depth=False, stride=stride))
 
     ### run evaluation ###
 
     print("#"*20 + " Results...")
-
+    
     import evo
     from evo.core.trajectory import PoseTrajectory3D
     from evo.tools import file_interface
@@ -131,4 +145,6 @@ if __name__ == '__main__':
         pose_relation=PoseRelation.translation_part, align=True, correct_scale=False)
 
     print(result.stats)
+    iter_time_np = np.array(iter_times)
+    print("Mean time: " + str(np.mean(iter_time_np)))
 

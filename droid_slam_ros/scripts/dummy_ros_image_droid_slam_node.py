@@ -1,0 +1,205 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+file_location = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(file_location+'/../../share/droid_slam_ros/droid_slam')
+
+from tqdm import tqdm
+import numpy as np
+import torch
+import lietorch
+import cv2
+import os
+import glob 
+import time
+import argparse
+import time
+import torch.nn.functional as F
+from droid import Droid
+import rclpy
+from rclpy.node import Node
+from cv_bridge import CvBridge
+from sensor_msgs.msg import CameraInfo
+
+import matplotlib.pyplot as plt
+
+class DummyDroidNode(Node):
+    def __init__(self):
+        super().__init__('dummy_droid_node')
+        self.cv_bridge_ = CvBridge()
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--datapath",default="/home/kushtimusprime/legs_ws/src/droid_slam_ros/datasets/ETH3D-SLAM/training/sfm_house_loop")
+        parser.add_argument("--weights", default="droid.pth")
+        parser.add_argument("--buffer", type=int, default=1024)
+        parser.add_argument("--image_size", default=[240, 320])
+        parser.add_argument("--disable_vis", action="store_true",default=False)
+        parser.add_argument("--upsample", action="store_true",default=False)
+        parser.add_argument("--beta", type=float, default=0.5)
+        parser.add_argument("--filter_thresh", type=float, default=2.0)
+        parser.add_argument("--warmup", type=int, default=8)
+        parser.add_argument("--keyframe_thresh", type=float, default=3.5)
+        parser.add_argument("--frontend_thresh", type=float, default=16.0)
+        parser.add_argument("--frontend_window", type=int, default=16)
+        parser.add_argument("--frontend_radius", type=int, default=1)
+        parser.add_argument("--frontend_nms", type=int, default=0)
+
+        parser.add_argument("--stereo", action="store_true",default=False)
+        parser.add_argument("--depth", action="store_true",default=True)
+
+        parser.add_argument("--backend_thresh", type=float, default=22.0)
+        parser.add_argument("--backend_radius", type=int, default=2)
+        parser.add_argument("--backend_nms", type=int, default=3)
+        args = parser.parse_args()
+        torch.multiprocessing.set_start_method('spawn')
+        print("Running evaluation on {}".format(args.datapath))
+        print(args)
+
+        # this can usually be set to 2-3 except for "camera_shake" scenes
+        # set to 2 for test scenes
+        stride = 1
+
+        tstamps = []
+        iter_times = []
+        for (t, image, depth, intrinsics) in tqdm(self.ros_image_stream(args.datapath, use_depth=True, stride=stride)):
+            start_time = time.time()
+            if not args.disable_vis:
+                self.show_image(image[0])
+
+            if t == 0:
+                args.image_size = [image.shape[2], image.shape[3]]
+                self.droid = Droid(args)
+            
+            self.droid.track(t, image, depth, intrinsics=intrinsics)
+            end_time = time.time()
+            iter_times.append(end_time - start_time)
+        traj_est = self.droid.terminate(self.ros_image_stream(args.datapath, use_depth=False, stride=stride))
+
+        ### run evaluation ###
+
+        print("#"*20 + " Results...")
+        
+        import evo
+        from evo.core.trajectory import PoseTrajectory3D
+        from evo.tools import file_interface
+        from evo.core import sync
+        import evo.main_ape as main_ape
+        from evo.core.metrics import PoseRelation
+
+        image_path = os.path.join(args.datapath, 'rgb')
+        images_list = sorted(glob.glob(os.path.join(image_path, '*.png')))[::stride]
+        tstamps = [float(x.split('/')[-1][:-4]) for x in images_list]
+
+        traj_est = PoseTrajectory3D(
+            positions_xyz=traj_est[:,:3],
+            orientations_quat_wxyz=traj_est[:,3:],
+            timestamps=np.array(tstamps))
+
+        gt_file = os.path.join(args.datapath, 'groundtruth.txt')
+        traj_ref = file_interface.read_tum_trajectory_file(gt_file)
+
+        traj_ref, traj_est = sync.associate_trajectories(traj_ref, traj_est)
+
+        result = main_ape.ape(traj_ref, traj_est, est_name='traj', 
+            pose_relation=PoseRelation.translation_part, align=True, correct_scale=False)
+
+        print(result.stats)
+        iter_time_np = np.array(iter_times)
+        print("Mean time: " + str(np.mean(iter_time_np)))
+        print("Did ROS image stream")
+
+    def show_image(self,image):
+        image = image.permute(1, 2, 0).cpu().numpy()
+        cv2.imshow('image', image / 255.0)
+        cv2.waitKey(1)
+
+    def ros_image_stream(self,datapath,use_depth=False,stride=1):
+        fx, fy, cx, cy = np.loadtxt(os.path.join(datapath, 'calibration.txt')).tolist()
+        image_list = sorted(glob.glob(os.path.join(datapath, 'rgb', '*.png')))[::stride]
+        depth_list = sorted(glob.glob(os.path.join(datapath, 'depth', '*.png')))[::stride]
+
+        for t, (image_file, depth_file) in enumerate(zip(image_list, depth_list)):
+            
+            image = cv2.imread(image_file)
+            depth = cv2.imread(depth_file, cv2.IMREAD_ANYDEPTH) / 5000.0
+            ros_image = self.cv_bridge_.cv2_to_imgmsg(image,encoding="passthrough")
+            ros_image.header.frame_id = "droid_optical_frame"
+            ros_image.header.stamp = self.get_clock().now().to_msg()
+            ros_depth = self.cv_bridge_.cv2_to_imgmsg(depth,encoding="passthrough")
+            ros_depth.header.stamp = ros_image.header.stamp
+            ros_depth.header.frame_id = "droid_optical_frame"
+            ros_camera_info = CameraInfo()
+            ros_camera_info.header.stamp = ros_image.header.stamp
+            ros_camera_info.header.frame_id = "droid_optical_frame"
+            ros_camera_info.k = [fx,0.0,cx,0.0,fy,cy,0.0,0.0,1.0]
+            new_image = self.cv_bridge_.imgmsg_to_cv2(ros_image)
+            new_depth = self.cv_bridge_.imgmsg_to_cv2(ros_depth)
+            new_fx,_,new_cx,_,new_fy,new_cy,_,_,_ = ros_camera_info.k
+            h0, w0, _ = new_image.shape
+            h1 = int(h0 * np.sqrt((384 * 512) / (h0 * w0)))
+            w1 = int(w0 * np.sqrt((384 * 512) / (h0 * w0)))
+
+            new_image = cv2.resize(new_image, (w1, h1))
+            new_image = new_image[:h1-h1%8, :w1-w1%8]
+            new_image = torch.as_tensor(new_image).permute(2, 0, 1)
+            
+            new_depth = torch.as_tensor(new_depth)
+            new_depth = F.interpolate(new_depth[None,None], (h1, w1)).squeeze()
+            new_depth = new_depth[:h1-h1%8, :w1-w1%8]
+
+            intrinsics = torch.as_tensor([new_fx, new_fy, new_cx, new_cy])
+            intrinsics[0::2] *= (w1 / w0)
+            intrinsics[1::2] *= (h1 / h0)
+
+            if use_depth:
+                yield t, new_image[None], new_depth, intrinsics
+
+            else:
+                yield t, new_image[None], intrinsics
+
+    def image_stream(self,datapath, use_depth=False, stride=1):
+        """ image generator """
+
+        fx, fy, cx, cy = np.loadtxt(os.path.join(datapath, 'calibration.txt')).tolist()
+        image_list = sorted(glob.glob(os.path.join(datapath, 'rgb', '*.png')))[::stride]
+        depth_list = sorted(glob.glob(os.path.join(datapath, 'depth', '*.png')))[::stride]
+
+        for t, (image_file, depth_file) in enumerate(zip(image_list, depth_list)):
+            
+            image = cv2.imread(image_file)
+            depth = cv2.imread(depth_file, cv2.IMREAD_ANYDEPTH) / 5000.0
+
+            h0, w0, _ = image.shape
+            h1 = int(h0 * np.sqrt((384 * 512) / (h0 * w0)))
+            w1 = int(w0 * np.sqrt((384 * 512) / (h0 * w0)))
+
+            image = cv2.resize(image, (w1, h1))
+            image = image[:h1-h1%8, :w1-w1%8]
+            image = torch.as_tensor(image).permute(2, 0, 1)
+            
+            depth = torch.as_tensor(depth)
+            depth = F.interpolate(depth[None,None], (h1, w1)).squeeze()
+            depth = depth[:h1-h1%8, :w1-w1%8]
+
+            intrinsics = torch.as_tensor([fx, fy, cx, cy])
+            intrinsics[0::2] *= (w1 / w0)
+            intrinsics[1::2] *= (h1 / h0)
+
+            if use_depth:
+                yield t, image[None], depth, intrinsics
+
+            else:
+                yield t, image[None], intrinsics
+
+def main(args=None):
+    rclpy.init(args=args)
+
+    dummy_droid_node = DummyDroidNode()
+
+    rclpy.spin(dummy_droid_node)
+
+    dummy_droid_node.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()

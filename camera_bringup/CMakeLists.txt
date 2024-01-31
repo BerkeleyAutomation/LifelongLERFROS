@@ -39,6 +39,16 @@ install(PROGRAMS
 )
 
 install(PROGRAMS
+  scripts/arducam_right_compressed_converter.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(PROGRAMS
+  scripts/get_aruco_pose_node.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(PROGRAMS
   scripts/nerf_collection_pose.py
   DESTINATION lib/${PROJECT_NAME}
 )
@@ -64,12 +74,62 @@ install(PROGRAMS
 )
 
 install(PROGRAMS
+  scripts/arducam_left_compressed_converter.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(PROGRAMS
   scripts/image_pose_filtering.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
 install(PROGRAMS
   scripts/4_arducam_compressed_converter.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(PROGRAMS
+  scripts/aruco_detector_node.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(PROGRAMS
+  scripts/calibrate_extrinsics_node.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(PROGRAMS
+  scripts/aruco_pose_calc_node.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(PROGRAMS
+  scripts/find_relative_cam_poses.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(PROGRAMS
+  scripts/save_images_for_calibration.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(PROGRAMS
+  scripts/save_images_for_calibration_vid_stream.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(PROGRAMS
+  scripts/compare_arucos.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(PROGRAMS
+  scripts/3_arducam_compressed_converter.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(PROGRAMS
+  scripts/3_arducam_compressed_converter_test.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

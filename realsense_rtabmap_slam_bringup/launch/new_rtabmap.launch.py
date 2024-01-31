@@ -14,14 +14,14 @@ from launch_ros.actions import Node
 def generate_launch_description():
     parameters_map = [
         {
-            "frame_id": "ros2_camera_link",
+            "frame_id": "base_footprint",
             "subscribe_depth": True,
             "approx_sync": True,
             # Set publish tf to true for individual RTABMAP testing
-            "publish_tf": True,
-            "wait_for_transform": 1.0,
+            "publish_tf": False,
+            "wait_for_transform": 2.0,
             "odom_frame_id": "odom",  
-            "approx_sync_max_interval": 0.01,
+            "approx_sync_max_interval": 0.2,
             # "tf_delay": 0.1,
             # "tf_tolerance": 0.01,
             "cloud_noise_filtering_min_neighbors": "2",
@@ -35,14 +35,14 @@ def generate_launch_description():
 
     parameters_odom = [
         {
-            "frame_id": "ros2_camera_link",
+            "frame_id": "base_footprint",
             "subscribe_depth": True,
             "approx_sync": True,
             "odom_frame_id": "odom",
-            "approx_sync_max_interval": 0.01,
+            "approx_sync_max_interval": 0.2,
             # Set publish tf to true for individual RTABMAP testing
             "publish_tf": True,
-            "wait_for_transform": 1.0,
+            "wait_for_transform": 2.0,
             "queue_size": 100,
             'wait_imu_to_init':False
         }
@@ -69,13 +69,13 @@ def generate_launch_description():
             # Set env var to print messages to stdout immediately
             SetEnvironmentVariable("RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED", "1"),
             # Nodes to launch
-            Node(
-                package="rtabmap_odom",
-                executable="rgbd_odometry",
-                output="screen",
-                parameters=parameters_odom,
-                remappings=remappings,
-            ),
+            # Node(
+            #     package="rtabmap_odom",
+            #     executable="rgbd_odometry",
+            #     output="screen",
+            #     parameters=parameters_odom,
+            #     remappings=remappings,
+            # ),
             Node(
                 package="rtabmap_slam",
                 executable="rtabmap",
@@ -85,6 +85,16 @@ def generate_launch_description():
                 arguments=["-d"],
                 # -d will delete the database before starting, otherwise the previous mapping session is loaded
             ),
+            Node(
+                package="tf2_ros",
+                executable="static_transform_publisher",
+                arguments=["0", "0", "1.1557", "0", "0.0", "0.0", "base_footprint", "ros2_camera_link"]
+            ),
+            # Node(
+            #     package="tf2_ros",
+            #     executable="static_transform_publisher",
+            #     arguments=["0", "0", "0.0762", "0", "0", "0", "head_tilt_link", "ros2_camera_link"]
+            # )
             # Node(
             # package='imu_filter_madgwick', executable='imu_filter_madgwick_node', output='screen',
             # parameters=[{'use_mag': False, 

@@ -79,7 +79,7 @@ class PoseTrajectoryFiller:
     @torch.no_grad()
     def __call__(self, image_stream):
         """ fill in poses of non-keyframe images """
-
+        
         # store all camera poses
         pose_list = []
 
@@ -95,10 +95,8 @@ class PoseTrajectoryFiller:
             if len(tstamps) == 16:
                 pose_list += self.__fill(tstamps, images, intrinsics)
                 tstamps, images, intrinsics = [], [], []
-
         if len(tstamps) > 0:
             pose_list += self.__fill(tstamps, images, intrinsics)
-
         # stitch pose segments together
         return lietorch.cat(pose_list, 0)
 

@@ -53,7 +53,7 @@ class DepthVideo:
         # self.dirty[index] = True
         self.tstamp[index] = item[0]
         self.images[index] = item[1]
-
+        
         if item[2] is not None:
             self.poses[index] = item[2]
 

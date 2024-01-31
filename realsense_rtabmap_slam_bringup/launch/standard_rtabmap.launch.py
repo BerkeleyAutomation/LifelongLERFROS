@@ -1,97 +1,87 @@
 # Requirements:
-#   A realsense D400 series
-#   Install realsense2 ros2 package (refactor branch)
+#   A realsense D435i
+#   Install realsense2 ros2 package (ros-$ROS_DISTRO-realsense2-camera)
 # Example:
-#   $ ros2 launch realsense2_camera rs_launch.py align_depth:=true
-#   $ ros2 launch rtabmap_ros realsense_d400.launch.py
+#   $ ros2 launch realsense2_camera rs_launch.py enable_gyro:=true enable_accel:=true unite_imu_method:=1 enable_sync:=true
+#
+#   $ ros2 launch rtabmap_examples realsense_d435i_color.launch.py
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, SetEnvironmentVariable
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
-
 def generate_launch_description():
-    parameters_map = [
-        {
-            "frame_id": "base_link_realsense",
-            "subscribe_depth": True,
-            "approx_sync": True,
-            # Set publish tf to true for individual RTABMAP testing
-            "publish_tf": True,
-            "wait_for_transform": 1.0,
-            "odom_frame_id": "odom_cam",  
-            # "approx_sync_max_interval": 0.02,
-            # "tf_delay": 0.1,
-            # "tf_tolerance": 0.01,
-            "cloud_noise_filtering_min_neighbors": "2",
-            "cloud_noise_filtering_radius": "0.05",
-            "Rtabmap/StartNewMapOnLoopClosure": "true",
-            "optimize_from_graph_end": False,
-            "queue_size": 100,
-            'wait_imu_to_init':True
-        }
-    ]
+    parameters=[{
+          'frame_id':'camera_link',
+          'subscribe_depth':True,
+          'subscribe_odom_info':False,
+          'approx_sync':True,
+          'wait_imu_to_init':False,
+          'publish_tf':True,
+          'odom_frame_id':'odom',
+          "approx_sync_max_interval": 0.2,
+          "wait_for_transform": 2.0,
+          "cloud_noise_filtering_min_neighbors": "2",
+          "cloud_noise_filtering_radius": "0.05",
+          "Rtabmap/StartNewMapOnLoopClosure": "true",
+          "optimize_from_graph_end": False,
+          "queue_size": 1000}]
 
-    parameters_odom = [
-        {
-            "frame_id": "base_link_realsense",
-            "subscribe_depth": True,
-            "approx_sync": True,
-            "odom_frame_id": "odom_cam",
-            # Set publish tf to true for individual RTABMAP testing
-            "publish_tf": True,
-            "wait_for_transform": 1.0,
-            "queue_size": 100,
-            'wait_imu_to_init':True
-        }
-    ]
+    remappings=[
+          ('imu', '/imu/data'),
+          ('rgb/image', '/camera/color/image_raw'),
+          ('rgb/camera_info', '/camera/color/camera_info'),
+          ('depth/image', '/camera/depth/image_rect_raw')]
 
-    remappings = [
-        ("rgb/image", "/repub_image_raw"), #cam/color/image
-        ("rgb/camera_info", "/camera/color/camera_info"), #/cam/info
-        ("depth/image", "/camera/depth/image_rect_raw"), #/cam/depth/image
-        ('imu', '/imu/data'),
-        #("rgb/image", "/oak/rgb/image_raw"), #cam/color/image
-        #("rgb/camera_info", "/oak/rgb/camera_info"), #/cam/info
-        #("depth/image", "/oak/stereo/image_raw"), #/cam/depth/image
-    ]
+    return LaunchDescription([
 
-    # remappings = [
-    #     ("rgb/image", "/cam/color/image"),
-    #     ("rgb/camera_info", "/cam/info"),
-    #     ("depth/image", "/cam/depth/image"),
-    # ]
+        # Nodes to launch       
+        Node(
+            package='rtabmap_odom', executable='rgbd_odometry', output='screen',
+            parameters=parameters,
+            remappings=remappings),
 
-    return LaunchDescription(
-        [
-            # Set env var to print messages to stdout immediately
-            SetEnvironmentVariable("RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED", "1"),
-            # Nodes to launch
-            Node(
-                package="rtabmap_odom",
-                executable="rgbd_odometry",
-                output="screen",
-                parameters=parameters_odom,
-                remappings=remappings,
-            ),
-            Node(
-                package="rtabmap_slam",
-                executable="rtabmap",
-                output="screen",
-                parameters=parameters_map,
-                remappings=remappings,
-                arguments=["-d"],
-                # -d will delete the database before starting, otherwise the previous mapping session is loaded
-            ),
-            Node(
-            package='imu_filter_madgwick', executable='imu_filter_madgwick_node', output='screen',
-            parameters=[{'use_mag': False, 
-                         'world_frame':'enu', 
-                         'publish_tf':False}],
-            remappings=[('imu/data_raw', '/camera/imu')]),
-            Node(
-            package='tf2_ros', executable='static_transform_publisher', output='screen',
-            arguments=['0', '0', '0', '0', '0', '0', 'camera_gyro_optical_frame', 'camera_imu_optical_frame']),
-        ]
-    )
+        Node(
+            package='rtabmap_slam', executable='rtabmap', output='screen',
+            parameters=parameters,
+            remappings=remappings,
+            arguments=['-d']),
+
+        # Node(
+        #     package='rtabmap_viz', executable='rtabmap_viz', output='screen',
+        #     parameters=parameters,
+        #     remappings=remappings),
+        
+        # # Because of this issue: https://github.com/IntelRealSense/realsense-ros/issues/2564
+        # # Generate point cloud from not aligned depth
+        # Node(
+        #     package='rtabmap_util', executable='point_cloud_xyz', output='screen',
+        #     parameters=[{'approx_sync':False}],
+        #     remappings=[('depth/image',       '/camera/depth/image_rect_raw'),
+        #                 ('depth/camera_info', '/camera/depth/camera_info'),
+        #                 ('cloud',             '/camera/cloud_from_depth')]),
+        
+        # # Generate aligned depth to color camera from the point cloud above       
+        # Node(
+        #     package='rtabmap_util', executable='pointcloud_to_depthimage', output='screen',
+        #     parameters=[{ 'decimation':2,
+        #                   'fixed_frame_id':'camera_link',
+        #                   'fill_holes_size':1}],
+        #     remappings=[('camera_info', '/camera/color/camera_info'),
+        #                 ('cloud',       '/camera/cloud_from_depth'),
+        #                 ('image_raw',   '/camera/realigned_depth_to_color/image_raw')]),
+        
+        # # Compute quaternion of the IMU
+        # Node(
+        #     package='imu_filter_madgwick', executable='imu_filter_madgwick_node', output='screen',
+        #     parameters=[{'use_mag': False, 
+        #                  'world_frame':'enu', 
+        #                  'publish_tf':False}],
+        #     remappings=[('imu/data_raw', '/camera/imu')]),
+        
+        # # The IMU frame is missing in TF tree, add it:
+        # Node(
+        #     package='tf2_ros', executable='static_transform_publisher', output='screen',
+        #     arguments=['0', '0', '0', '0', '0', '0', 'camera_gyro_optical_frame', 'camera_imu_optical_frame']),
+    ])

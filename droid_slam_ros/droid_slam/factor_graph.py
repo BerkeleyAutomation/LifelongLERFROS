@@ -249,7 +249,7 @@ class FactorGraph:
     @torch.cuda.amp.autocast(enabled=False)
     def update_lowmem(self, t0=None, t1=None, itrs=2, use_inactive=False, EP=1e-7, steps=8):
         """ run update operator on factor graph - reduced memory implementation """
-
+        
         # alternate corr implementation
         t = self.video.counter.value
 
@@ -259,6 +259,8 @@ class FactorGraph:
         for step in range(steps):
             print("Global BA Iteration #{}".format(step+1))
             with torch.cuda.amp.autocast(enabled=False):
+                if(self.ii.size() == torch.Size([0]) or self.jj.size() == torch.Size([0])):
+                    return
                 coords1, mask = self.video.reproject(self.ii, self.jj)
                 motn = torch.cat([coords1 - self.coords0, self.target - coords1], dim=-1)
                 motn = motn.permute(0,1,4,2,3).clamp(-64.0, 64.0)
@@ -370,6 +372,7 @@ class FactorGraph:
 
                         if (t0 <= i1 < t) and (t1 <= j1 < t):
                             d[(i1-t0)*(t-t1) + (j1-t1)] = np.inf
-
-        ii, jj = torch.as_tensor(es, device=self.device).unbind(dim=-1)
-        self.add_factors(ii, jj, remove)
+        
+        if(len(es) > 0):
+            ii, jj = torch.as_tensor(es, device=self.device).unbind(dim=-1)
+            self.add_factors(ii, jj, remove)

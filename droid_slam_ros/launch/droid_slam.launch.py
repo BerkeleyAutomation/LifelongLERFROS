@@ -38,7 +38,7 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     ld.add_action(Node(
-        package='droid_slam_ros', executable='droid_slam_node.py', output='screen',
+        package='droid_slam_ros', executable='multi_real_droid_subscriber_node_prime.py', output='screen',
         name='droid_slam_ros'
         ))
     #ld.add_action(Node(

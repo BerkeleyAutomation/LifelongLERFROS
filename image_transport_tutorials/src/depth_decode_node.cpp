@@ -6,7 +6,7 @@
 #include <limits>
 #include <string>
 #include <vector>
-
+#include <chrono>
 #include "cv_bridge/cv_bridge.h"
 #include <opencv2/imgcodecs.hpp>
 #include <rclcpp/logging.hpp>
@@ -44,6 +44,7 @@ class DepthDecodeNode : public rclcpp::Node
     }
 
     sensor_msgs::msg::Image::SharedPtr decodeCompressedDepthImage(const sensor_msgs::msg::CompressedImage& message) {
+        auto start_time = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         cv_bridge::CvImagePtr cv_ptr(new cv_bridge::CvImage);
 
         auto logger = rclcpp::get_logger("compressed_depth_image_transport");
@@ -109,6 +110,8 @@ class DepthDecodeNode : public rclcpp::Node
                     }
 
                     // Publish message to user callback
+                    auto end_time = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+                    std::cout << "Time in seconds: " << end_time - start_time << std::endl;
                     return cv_ptr->toImageMsg();
                 }
             }
@@ -131,10 +134,14 @@ class DepthDecodeNode : public rclcpp::Node
                 if ((rows > 0) && (cols > 0))
                 {
                     // Publish message to user callback
+                    auto end_time = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+                    std::cout << "Time in seconds: " << end_time - start_time << std::endl;
                     return cv_ptr->toImageMsg();
                 }
             }
         }
+        auto end_time = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        std::cout << "Time in seconds: " << end_time - start_time << std::endl;
         return sensor_msgs::msg::Image::SharedPtr();
     }
 

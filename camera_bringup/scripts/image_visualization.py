@@ -10,14 +10,14 @@ import numpy as np
 class ImageVisualization(Node):
     def __init__(self):
         super().__init__('image_visualization')
-        self.depth_subscriber_ = self.create_subscription(Image, '/camera/depth/image_rect_raw', self.image_callback, 10)
-        self.color_subscriber_ = self.create_subscription(CompressedImage, '/camera/color/image_raw/compressed', self.compressed_image_callback, 10)
+        # self.depth_subscriber_ = self.create_subscription(Image, '/camera/depth/image_rect_raw', self.image_callback, 10)
+        self.color_subscriber_ = self.create_subscription(CompressedImage, '/camRight/image_raw/compressed_synced', self.compressed_image_callback, 10)
         #self.subscription = self.create_subscription(CompressedImage,'/camera/color/image_raw/compressed',self.compressed_image_callback,10)
         self.bridge = CvBridge()
 
     def image_callback(self, msg):
         try:
-            cv_image = self.bridge.imgmsg_to_cv2(msg, "passthrough")
+            cv_image = self.bridge.compressed_imgmsg_to_cv2(msg, "passthrough")
         except Exception as e:
             self.get_logger().info(f"Error converting image: {e}")
             return

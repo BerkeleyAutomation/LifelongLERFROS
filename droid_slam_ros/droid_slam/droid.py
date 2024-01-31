@@ -11,12 +11,13 @@ from trajectory_filler import PoseTrajectoryFiller
 
 from collections import OrderedDict
 from torch.multiprocessing import Process
-
+import os
 
 class Droid:
     def __init__(self, args):
         super(Droid, self).__init__()
-        self.load_weights(args.weights)
+        full_weights = os.path.join(args.datapath,'../../../..',args.weights)
+        self.load_weights(full_weights)
         self.args = args
         self.disable_vis = args.disable_vis
 
@@ -30,7 +31,8 @@ class Droid:
         self.frontend = DroidFrontend(self.net, self.video, self.args)
         
         # backend process
-        # self.backend = DroidBackend(self.net, self.video, self.args)
+        print("Initialized backend")
+        self.backend = DroidBackend(self.net, self.video, self.args)
 
         # visualizer
         if not self.disable_vis:
@@ -85,12 +87,11 @@ class Droid:
 
         torch.cuda.empty_cache()
         print("#" * 32)
-        self.backend(7)
+        # self.backend(7)
 
         torch.cuda.empty_cache()
         print("#" * 32)
-        self.backend(12)
-
+        # self.backend(12)
         camera_trajectory = self.traj_filler(stream)
         return camera_trajectory.inv().data.cpu().numpy()
 

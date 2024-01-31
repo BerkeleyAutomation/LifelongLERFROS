@@ -42,8 +42,6 @@ def white_balance(img):
 @torch.no_grad()
 def update_visualization(server: viser.ViserServer, video, dirty_index: torch.Tensor):
     video.dirty[dirty_index] = False
-    print("Dirty index")
-    print(dirty_index)
     # convert poses to 4x4 matrix
     poses = torch.index_select(video.poses, 0, dirty_index)
     disps = torch.index_select(video.disps, 0, dirty_index)

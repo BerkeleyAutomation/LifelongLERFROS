@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(find-pkg-share camera_bringup)/launch/full_compression_converter.launch.py" />
+    <include file="$(find-pkg-share droid_slam_ros)/launch/static_transforms.launch.py" />
+</launch>
